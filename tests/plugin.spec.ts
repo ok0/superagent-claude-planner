@@ -109,6 +109,9 @@ describe('plugin packaging', () => {
       '(B) at-once',
       'never choose for the user',
       're-run `show`',
+      'never skip',
+      'Ask the user to confirm or correct the list, roles, and slugs',
+      'only a guess',
     ]
     for (const needle of required) {
       expect(text).toContain(needle)
@@ -117,5 +120,16 @@ describe('plugin packaging', () => {
     expect(text).not.toContain('SAC_PLAN_EOF')
     expect(text).not.toContain('gh issue')
     expect(text).not.toContain('api.github.com')
+  })
+
+  it('skill confirms the repositories before it saves a plan', () => {
+    const text = body(readText('skills/plan/SKILL.md'))
+    const confirm = text.indexOf('Ask the user to confirm or correct the list, roles, and slugs')
+    const save = text.indexOf('sac-planner save --file')
+    const approve = text.indexOf('--approve-hash')
+    expect(confirm).toBeGreaterThan(-1)
+    expect(confirm).toBeLessThan(save)
+    expect(save).toBeLessThan(approve)
+    expect(text).toContain('separate from the approval in step 9')
   })
 })

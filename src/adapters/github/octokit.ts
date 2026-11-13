@@ -4,6 +4,8 @@ import type { FoundIssue, HostIdentity, IssueHost, IssueRef } from '../../core/g
 
 export type OctokitHostOptions = { token: string; baseUrl?: string; fetch?: typeof fetch }
 
+export const GITHUB_API_VERSION = '2026-03-10'
+
 export function sanitizeError(e: unknown, token: string): GitHubError {
   const err = e as { status?: unknown; response?: unknown } | null
   const status =
@@ -31,6 +33,9 @@ export function createOctokitIssueHost(opts: OctokitHostOptions): IssueHost {
     ...(opts.baseUrl ? { baseUrl: opts.baseUrl } : {}),
     ...(opts.fetch ? { request: { fetch: opts.fetch } } : {}),
     log: { debug() {}, info() {}, warn() {}, error() {} },
+  })
+  octokit.hook.before('request', options => {
+    options.headers['x-github-api-version'] = GITHUB_API_VERSION
   })
 
   async function guard<T>(fn: () => Promise<T>): Promise<T> {

@@ -18,7 +18,7 @@ import { readPlanFile, validatePlan } from '../core/plan/validate.ts'
 import { publish } from '../core/publish.ts'
 import { renderAll } from '../core/render/render.ts'
 import type { RenderedIssue } from '../core/render/render.ts'
-import { projectRoot, planStoragePath, writeSessionMarker } from '../core/session.ts'
+import { draftPath, projectRoot, planStoragePath, removeDraft, writeSessionMarker } from '../core/session.ts'
 import { loadState } from '../core/state.ts'
 import type { State } from '../core/state.ts'
 import { writeJsonAtomic } from '../core/fsutil.ts'
@@ -61,7 +61,8 @@ Options:
   --json                   JSON output for show and catalog
   --hash <h>               Plan hash to approve (approve)
   --approve-hash <h>       Record approval of this hash, then publish (publish)
-  --dry-run                Render the issues without a token or host (publish)  -h, --help               Show this help
+  --dry-run                Render the issues without a token or host (publish)
+  -h, --help               Show this help
 
 Exit codes: 0 ok, 1 invalid or refused, 2 usage or config error, 3 GitHub failure
 `
@@ -351,8 +352,10 @@ export async function main(
       for (const e of result.errors) io.out(e.path + ': ' + e.message + '\n')
       return EXIT_INVALID
     }
-    const path = planStoragePath(projectRoot(io.env, io.cwd), result.plan.changesetId)
+    const root = projectRoot(io.env, io.cwd)
+    const path = planStoragePath(root, result.plan.changesetId)
     writeJsonAtomic(path, result.plan)
+    if (values.file !== undefined && resolve(io.cwd, values.file) === draftPath(root)) removeDraft(root)
     const rel = relative(io.cwd, path)
     const display = rel.startsWith('..') || isAbsolute(rel) ? path : rel
     io.out('saved ' + display + '\nOK ' + planHash(result.plan) + '\n')
@@ -362,7 +365,9 @@ export async function main(
   if (cmd === 'session') {
     const action = positionals[1]
     if (positionals.length !== 2 || (action !== 'start' && action !== 'end')) return usage(io)
-    const content = writeSessionMarker(projectRoot(io.env, io.cwd), action)
+    const root = projectRoot(io.env, io.cwd)
+    const content = writeSessionMarker(root, action)
+    if (action === 'end') removeDraft(root)
     io.out(action === 'start' ? 'session ' + content + '\n' : 'session done\n')
     return EXIT_OK
   }

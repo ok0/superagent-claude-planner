@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GitHubError } from '../src/core/errors.ts'
-import { createOctokitIssueHost } from '../src/adapters/github/octokit.ts'
+import { GITHUB_API_VERSION, createOctokitIssueHost } from '../src/adapters/github/octokit.ts'
 import { createGitHubStub } from './support/github-stub.ts'
 import type { StubRequest } from './support/github-stub.ts'
 
@@ -89,6 +89,29 @@ describe('octokit host adapter', () => {
     })
     const host = createOctokitIssueHost({ token: SENTINEL, baseUrl: stub.baseUrl, fetch: stub.fetch })
     expect(await host.findIssueByMarker('example-org/alpha', 'absent', 'planner-user')).toBeNull()
+  })
+
+  it('sends the pinned API version on every request', async () => {
+    const stub = createGitHubStub({
+      'GET /user': () => ({ status: 200, body: { login: 'u', type: 'User' } }),
+      'POST /repos/example-org/alpha/issues': () => ({
+        status: 201,
+        body: { number: 7, html_url: 'https://example.test/7' },
+      }),
+      'PATCH /repos/example-org/alpha/issues/7': () => ({ status: 200, body: { number: 7 } }),
+      'GET /repos/example-org/alpha/issues': () => ({ status: 200, body: [] }),
+    })
+    const host = createOctokitIssueHost({ token: SENTINEL, baseUrl: stub.baseUrl, fetch: stub.fetch })
+    await host.whoami()
+    await host.createIssue('example-org/alpha', { title: 'T', body: 'B' })
+    await host.updateIssueBody('example-org/alpha', 7, 'x')
+    await host.findIssueByMarker('example-org/alpha', 'M', 'u')
+    expect(stub.requests.length).toBe(4)
+    for (const req of stub.requests) {
+      expect(req.headers['x-github-api-version']).toBe(GITHUB_API_VERSION)
+    }
+    expect(GITHUB_API_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(GITHUB_API_VERSION).not.toBe('2022-11-28')
   })
 
   it('errors are GitHubError with token and authorization removed', async () => {

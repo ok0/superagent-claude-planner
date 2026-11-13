@@ -102,6 +102,7 @@ describe('save', () => {
     const m = new RegExp('^saved \\.sac-planner/' + ID + '/plan\\.json\\nOK (\\S+)\\n$').exec(r.out)
     expect(m).not.toBeNull()
     expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(true)
+    expect(existsSync(join(d, '.sac-planner', 'draft.json'))).toBe(false)
     const s = tempDir()
     const viaStdin = await run(['save'], { cwd: s, stdin: EXAMPLE_TEXT })
     expect(viaStdin.out).toBe('saved .sac-planner/' + ID + '/plan.json\nOK ' + m![1] + '\n')
@@ -123,6 +124,7 @@ describe('save', () => {
     expect(bad.code).toBe(1)
     expect(bad.out.startsWith('(root): invalid JSON')).toBe(true)
     expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(false)
+    expect(existsSync(join(d, '.sac-planner', 'draft.json'))).toBe(true)
     const plan = JSON.parse(EXAMPLE_TEXT) as Record<string, unknown>
     plan.changesetId = 'X'
     writeFileSync(join(d, '.sac-planner', 'draft.json'), JSON.stringify(plan))
@@ -131,6 +133,28 @@ describe('save', () => {
     expect(invalid.out).toContain('changesetId')
     expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(false)
     expect(existsSync(join(d, '.sac-planner', 'X', 'plan.json'))).toBe(false)
+    expect(existsSync(join(d, '.sac-planner', 'draft.json'))).toBe(true)
+  })
+
+  it('keeps a --file input that is not the session draft', async () => {
+    const d = tempDir()
+    writeFileSync(join(d, 'input.json'), EXAMPLE_TEXT)
+    const r = await run(['save', '--file', 'input.json'], { cwd: d })
+    expect(r.code).toBe(0)
+    expect(existsSync(join(d, 'input.json'))).toBe(true)
+  })
+
+  it('removes the draft under CLAUDE_PROJECT_DIR', async () => {
+    const a = tempDir()
+    mkdirSync(join(a, '.sac-planner'), { recursive: true })
+    writeFileSync(join(a, '.sac-planner', 'draft.json'), EXAMPLE_TEXT)
+    const r = await run(['save', '--file', '.sac-planner/draft.json'], {
+      cwd: a,
+      env: { HOME: tempDir(), CLAUDE_PROJECT_DIR: a },
+    })
+    expect(r.code).toBe(0)
+    expect(existsSync(join(a, '.sac-planner', 'draft.json'))).toBe(false)
+    expect(existsSync(join(a, '.sac-planner', ID, 'plan.json'))).toBe(true)
   })
 })
 
@@ -168,6 +192,18 @@ describe('session', () => {
     const content = readFileSync(join(d, '.sac-planner', '.session-active'), 'utf8').trim()
     expect(content).toBe('done')
     expect(r.out).toBe('session done\n')
+  })
+
+  it('end removes a leftover draft', async () => {
+    const d = tempDir()
+    mkdirSync(join(d, '.sac-planner'), { recursive: true })
+    writeFileSync(join(d, '.sac-planner', 'draft.json'), '{')
+    const r = await run(['session', 'end'], { cwd: d })
+    expect(r.code).toBe(0)
+    expect(r.out).toBe('session done\n')
+    expect(existsSync(join(d, '.sac-planner', 'draft.json'))).toBe(false)
+    const content = readFileSync(join(d, '.sac-planner', '.session-active'), 'utf8').trim()
+    expect(content).toBe('done')
   })
 
   it('needs start or end', async () => {

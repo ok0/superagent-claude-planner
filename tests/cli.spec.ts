@@ -144,6 +144,8 @@ describe('usage', () => {
     const r = await run(['--help'])
     expect(r.code).toBe(0)
     expect(r.out).toContain('Usage: sac-planner')
+    expect(r.out).toMatch(/\(publish\)\n  -h, --help +Show this help\n/)
+    expect(r.out).not.toContain(')  -h, --help')
   })
 })
 
