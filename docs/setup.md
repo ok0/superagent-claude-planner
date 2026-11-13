@@ -6,6 +6,8 @@ This guide covers the planner account, the token, the agent requirements, the co
 
 Create a dedicated GitHub account of type **User** (not a bot or GitHub App). It is used only to author the planning issues. The account must differ from the agent account named in `agent.login`.
 
+Your own GitHub User account with a personal access token also works, as long as it differs from the agent account.
+
 ## Token
 
 Create a personal access token (PAT) for the planner account with issue write access on the target repositories. Export it as `PLANNER_GITHUB_TOKEN`, or under the name set in `github.tokenEnv`:
@@ -19,7 +21,10 @@ Never put the token in a file. The guard hook blocks Bash commands that referenc
 ## Agent requirements
 
 - The planner account must differ from `agent.login`.
-- The planner account must be listed in the agent's allowed issue authors (`policy.allowed`). Otherwise the agent ignores the issues.
+- The planner account must be listed in the agent's allowed issue authors (`policy.allowed`). Otherwise the agent ignores the issues. Do not add the agent's own login there; the agent refuses to start if you do.
+- The agent's `policy.acceptMode` must be `auto`. The default, `observe`, only records events and starts no work.
+- Every target repository must be listed in the agent's `repositories`, and the agent account must be able to read it (write access lets it push branches and open pull requests).
+- The agent must be running (`superagent-claude start --config <path>`) with its own token, before or shortly after you publish.
 - `sac-planner publish` checks that the token belongs to a User account whose login differs from `agent.login`. It refuses to publish otherwise.
 
 ## Config file
@@ -113,3 +118,4 @@ If publishing stops part way, re-run the same `publish` command to resume. Alrea
 - Exit code 1: the plan is invalid or publishing was refused. Read the `path: message` lines, fix the plan, and validate again. For a refused publish, check the approval hash and the planner identity.
 - Exit code 2: a usage or config error. Check the command arguments, the config file, the token variable, and the catalog file. The error message names the file involved.
 - Exit code 3: a GitHub failure. Check network access, token scope, and repository access, then re-run the same `publish` command to resume.
+- Issues were created but the agent does nothing: check that the agent is running, that its policy.acceptMode is auto, that the repository is in its repositories, and that the planner account is in its policy.allowed. Each issue starts with the agent mention; new work starts only from that mention.

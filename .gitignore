@@ -8,3 +8,5 @@ coverage/
 *.log
 .DS_Store
 /.forbidden-names
+/sac-planner.config.json
+/superagent-claude.json

@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -36,5 +36,12 @@ describe('setup hints', () => {
 
   it('docs/setup.md exists', () => {
     expect(existsSync(join(ROOT, 'docs', 'setup.md'))).toBe(true)
+  })
+
+  it('docs/setup.md states the agent start conditions', () => {
+    const doc = readFileSync(join(ROOT, 'docs', 'setup.md'), 'utf8')
+    for (const term of ['policy.allowed', 'policy.acceptMode', '`auto`', '`repositories`', 'superagent-claude start']) {
+      expect(doc).toContain(term)
+    }
   })
 })
