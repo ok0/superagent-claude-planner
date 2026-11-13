@@ -33,7 +33,6 @@ It needs Node.js 22.19 or later. `<owner>/superagent-claude-planner` is the GitH
 
 - [Setup](docs/setup.md): planner account, token, config, catalog, plugin install
 - [CLI reference](docs/setup.md#cli-reference): every `sac-planner` command
-- [Release](docs/release.md): release procedure and checks
 
 ## Works with superagent-claude
 
@@ -49,9 +48,9 @@ The Skill confirms the repositories with you before it drafts anything, and it s
 
 The Skill runs each deterministic step through the `sac-planner` CLI, and you can run the same commands yourself: `save`, `validate`, `show`, `approve`, `publish`, `state`, `schema`, `catalog`, and `session`. `sac-planner --help` lists them, and the [CLI reference](docs/setup.md#cli-reference) describes each one. Every command finds the config by itself. For scripts and headless runs, `--config <path>` or `$SAC_PLANNER_CONFIG` points it at another file.
 
-## Development
+## Contributing
 
-`pnpm check` runs typecheck, format check, tests, build, bundle check, hygiene check, and commit-message check. `pnpm release:check` builds, checks the npm pack contents, and installs the tarball in a clean project. Commit messages follow Conventional Commits. `fixtures/synthetic-shop/` contains three small placeholder repositories, a sample catalog, and sample configs, so you can try the Skill without real repositories. To load the plugin from a local checkout, see [Plugin install](docs/setup.md#plugin-install).
+Development setup, checks, commit rules, and the release process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
