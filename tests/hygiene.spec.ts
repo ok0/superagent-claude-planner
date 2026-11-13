@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, describe, expect, it } from 'vitest'
-import { checkCoreImports, runHygiene } from '../scripts/check-hygiene.ts'
+import { checkCoreImports, runHygiene, stripRepoMeta } from '../scripts/check-hygiene.ts'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const NAME_A = 'zz-forbidden-' + 'alpha'
@@ -98,5 +98,79 @@ describe('hygiene', () => {
   it('repository passes hygiene', () => {
     const io = capture()
     expect(runHygiene({ root: ROOT, env: process.env, out: io.out, err: io.err })).toBe(0)
+  })
+})
+
+describe('repo-meta exemption', () => {
+  it('repository, homepage and bugs in root package.json are exempt', () => {
+    const tmp = fixture()
+    const pkg = write(
+      tmp,
+      'package.json',
+      JSON.stringify({
+        name: 'x',
+        repository: { type: 'git', url: 'https://h.example/' + NAME_A + '/x.git' },
+        homepage: 'https://h.example/' + NAME_A,
+        bugs: { url: 'https://h.example/' + NAME_A + '/issues' },
+      }),
+    )
+    const io = capture()
+    const code = runHygiene({
+      root: tmp,
+      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [pkg],
+      out: io.out,
+      err: io.err,
+    })
+    expect(code).toBe(0)
+  })
+
+  it('forbidden name in another package.json field fails', () => {
+    const tmp = fixture()
+    const pkg = write(
+      tmp,
+      'package.json',
+      JSON.stringify({
+        name: 'x',
+        description: NAME_A,
+        repository: { type: 'git', url: 'https://h.example/' + NAME_A + '/x.git' },
+        homepage: 'https://h.example/' + NAME_A,
+        bugs: { url: 'https://h.example/' + NAME_A + '/issues' },
+      }),
+    )
+    const io = capture()
+    const code = runHygiene({
+      root: tmp,
+      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [pkg],
+      out: io.out,
+      err: io.err,
+    })
+    expect(code).toBe(1)
+    expect(io.errText()).toContain('forbidden name #1')
+  })
+
+  it('nested package.json gets no exemption', () => {
+    const tmp = fixture()
+    const pkg = write(
+      tmp,
+      'fixtures/x/package.json',
+      JSON.stringify({ name: 'x', repository: { type: 'git', url: 'https://h.example/' + NAME_A + '/x.git' } }),
+    )
+    const io = capture()
+    const code = runHygiene({
+      root: tmp,
+      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [pkg],
+      out: io.out,
+      err: io.err,
+    })
+    expect(code).toBe(1)
+  })
+
+  it('stripRepoMeta leaves invalid JSON unchanged', () => {
+    const input = 'not json ' + NAME_A
+    expect(stripRepoMeta(input)).toBe(input)
+    expect(stripRepoMeta('{"homepage":"a","name":"b"}')).toBe('{"name":"b"}')
   })
 })

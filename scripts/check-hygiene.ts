@@ -71,11 +71,32 @@ export function listRepoFiles(root: string): string[] {
     .filter(path => existsSync(path) && statSync(path).isFile())
 }
 
-export function scanForbiddenNames(files: readonly string[], names: readonly string[]): string[] {
+export const REPO_META_FIELDS = ['repository', 'homepage', 'bugs'] as const
+
+export function stripRepoMeta(text: string): string {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return text
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return text
+  const obj = parsed as Record<string, unknown>
+  for (const field of REPO_META_FIELDS) delete obj[field]
+  return JSON.stringify(obj)
+}
+
+export function scanForbiddenNames(
+  files: readonly string[],
+  names: readonly string[],
+  opts: { packageJson?: string } = {},
+): string[] {
   const violations: string[] = []
   for (const file of files) {
     if (basename(file) === NAMES_FILE) continue
-    const lower = readFileSync(file, 'utf8').toLowerCase()
+    const text = readFileSync(file, 'utf8')
+    const isRootPackageJson = opts.packageJson !== undefined && resolve(file) === resolve(opts.packageJson)
+    const lower = (isRootPackageJson ? stripRepoMeta(text) : text).toLowerCase()
     names.forEach((name, index) => {
       if (lower.includes(name)) violations.push(`${file}: forbidden name #${index + 1}`)
     })
@@ -99,7 +120,7 @@ export function runHygiene(opts: {
   } else {
     const files = opts.files ?? listRepoFiles(opts.root)
     opts.out(`hygiene: checked ${loaded.names.length} names from ${loaded.source} in ${files.length} files\n`)
-    violations.push(...scanForbiddenNames(files, loaded.names))
+    violations.push(...scanForbiddenNames(files, loaded.names, { packageJson: join(opts.root, 'package.json') }))
   }
   for (const v of violations) opts.err('hygiene: ' + v + '\n')
   if (violations.length > 0) return 1

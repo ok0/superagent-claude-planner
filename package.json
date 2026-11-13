@@ -2,19 +2,26 @@
   "name": "superagent-claude-planner",
   "version": "0.1.0",
   "description": "Plans one change across several repositories as coordinated GitHub issues for an issue-driven coding agent.",
-  "private": true,
+  "license": "MIT",
+  "keywords": ["github", "issues", "planner", "multi-repo", "claude-code", "agent", "cli"],
+  "repository": { "type": "git", "url": "git+https://github.com/ok0/superagent-claude-planner.git" },
+  "homepage": "https://github.com/ok0/superagent-claude-planner#readme",
+  "bugs": { "url": "https://github.com/ok0/superagent-claude-planner/issues" },
   "type": "module",
   "bin": {
     "sac-planner": "lib/cli.js"
   },
   "exports": {
-    ".": "./lib/index.js"
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
   },
-  "files": [
-    "lib"
-  ],
+  "types": "./lib/index.d.ts",
+  "files": ["lib", "LICENSE", "README.md"],
+  "publishConfig": { "access": "public" },
   "scripts": {
-    "build": "tsdown && node -e \"require('node:fs').chmodSync('lib/cli.js', 0o755)\"",
+    "build": "node -e \"require('node:fs').rmSync('lib',{recursive:true,force:true})\" && tsdown && node -e \"require('node:fs').chmodSync('lib/cli.js', 0o755)\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write \"**/*.ts\"",
@@ -22,6 +29,9 @@
     "hygiene": "node scripts/check-hygiene.ts",
     "check:bundle": "node scripts/check-bundle.ts",
     "check:commits": "node scripts/check-commits.ts",
+    "check:pack": "node scripts/check-pack.ts",
+    "smoke:pack": "node scripts/smoke-pack.ts",
+    "release:check": "pnpm build && pnpm check:pack && pnpm smoke:pack",
     "check": "pnpm typecheck && pnpm format:check && pnpm test && pnpm build && pnpm check:bundle && pnpm hygiene && pnpm check:commits"
   },
   "engines": {
