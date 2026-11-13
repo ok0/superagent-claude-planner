@@ -7,8 +7,8 @@ allowed-tools:
   - Read
   - Grep
   - Glob
-  - Write
-  - Edit
+  - Bash(sac-planner session *)
+  - Bash(sac-planner save *)
   - Bash(sac-planner validate *)
   - Bash(sac-planner show *)
   - Bash(sac-planner state *)
@@ -30,9 +30,11 @@ The request is: $ARGUMENTS
 
 Turn the request into one plan that covers every affected repository, then publish one GitHub issue per repository only after the user explicitly approves the shown plan. You never write to GitHub yourself. The only write path is the single `sac-planner publish` command in step 10. Do not use `gh`, `curl`, or `git push`, and do not call any GitHub API directly.
 
+**Command rules.** Run one command per Bash call. Do not chain or decorate commands: no `;`, `&&`, `||`, `|`, `$?`, `echo`, `date`, redirection, or command substitution. The tool reports the exit code. Read and search files with Read, Grep, and Glob, not shell loops or cat/find pipelines. Never use Write or Edit under .sac-planner/; the sac-planner CLI writes every file there.
+
 Follow the steps in order.
 
-1. **Start the session.** Write the file `<project root>/.sac-planner/.session-active` (the project root is the working directory at invocation) with exactly this content: `active <current UTC time in ISO 8601>`. Use the Write tool. The guard hook restricts Bash commands while the file says `active`.
+1. **Start the session.** Run `sac-planner session start` from the project root (the working directory at invocation; do not change directory). It writes `.sac-planner/.session-active` with the current UTC time, and also refreshes a marker left by an earlier session. The guard hook restricts Bash commands while that file says `active`.
 
 2. **Refine the request.** Restate the request in one or two sentences. Ask only the questions whose answers change how the change is split across repositories. If the user passed a config path, add `--config <path>` to every `sac-planner` command you run.
 
@@ -50,7 +52,15 @@ Follow the steps in order.
 
 7. **Decompose.** Produce, without asking the user to write any of it: the repositories with their roles (`producer`, `consumer`, `both`, or `other`), one task per repository, the shared contract (summary, definition, rules, examples, and changes), the dependencies (`before`, `after`, and `reason`), and a merge-order note. Run `sac-planner schema` if you are unsure of the format.
 
-8. **Write and validate.** Write `.sac-planner/<changesetId>/plan.json`. Run `sac-planner validate <plan>`. Fix every reported `path: message` line and repeat until the command prints `OK <hash>`.
+8. **Save and validate.** Save the whole plan with this exact form, the JSON between the two delimiter lines:
+
+   ```
+   sac-planner save <<'SAC_PLAN_EOF'
+   { ...the plan JSON... }
+   SAC_PLAN_EOF
+   ```
+
+   Keep the quotes around the first SAC_PLAN_EOF and put nothing after the last one. The command validates the plan and writes `.sac-planner/<changesetId>/plan.json`. It prints `saved <plan>` and `OK <hash>`, or one `path: message` line per problem and saves nothing. Fix every problem and save the whole plan again until it prints `OK <hash>`. To change a saved plan, save the whole plan again. Use the printed path as <plan> below; `sac-planner validate <plan>` re-checks it.
 
 9. **Show and ask for approval.** Run `sac-planner show <plan>`. Present each issue (its repository, title, and key body parts) and the `Plan hash:` line verbatim. Ask the user to reply "approve" (or "승인") to publish these issues with that hash. After **any** plan edit, re-run validate, re-run `show`, present the new hash, and ask again. An earlier approval no longer counts.
 
@@ -59,4 +69,4 @@ Follow the steps in order.
     - Exit 2: this is a configuration problem. Point the user to `docs/setup.md`.
     - Exit 3: this is a GitHub failure. Offer to re-run the same command to resume, and ask before you re-run it.
 
-11. **End the session.** At the end, or whenever the user aborts or declines, overwrite `.sac-planner/.session-active` with the single word `done`.
+11. **End the session.** At the end, or whenever the user aborts or declines, run `sac-planner session end`, which writes `done` to `.sac-planner/.session-active`.

@@ -7,7 +7,8 @@ const SAC_SUBCOMMANDS = new Set(['validate', 'show', 'state', 'schema', 'catalog
 const FIND_FORBIDDEN = ['-delete', '-exec', '-execdir', '-ok', '-okdir', '-fprint', '-fprintf', '-fls']
 const GIT_READ = new Set(['log', 'show', 'ls-files', 'grep', 'status', 'diff', 'rev-parse'])
 const SESSION_MAX_AGE_MS = 4 * 3600 * 1000
-const SESSION_SUFFIX = 'while the plan session is active (.sac-planner/.session-active); finish or abort the session to lift this'
+const SESSION_SUFFIX =
+  'while the plan session is active (.sac-planner/.session-active); finish or abort the session to lift this'
 
 function readJson(path) {
   try {
@@ -53,6 +54,20 @@ function commandTokens(segment) {
 function commandWord(segment) {
   const tokens = commandTokens(segment)
   return tokens.length > 0 ? basename(tokens[0]) : ''
+}
+
+function stripSaveHeredoc(command) {
+  const lines = command.split('\n')
+  const m = /^(.*?)<<'([A-Za-z_][A-Za-z0-9_]*)'[ \t]*$/.exec(lines[0])
+  if (!m) return command
+  const head = m[1]
+  const tokens = commandTokens(head)
+  if (basename(tokens[0] ?? '') !== 'sac-planner' || tokens[1] !== 'save') return command
+  if (/[;|&<>()`]/.test(head)) return command
+  const end = lines.findIndex((l, i) => i > 0 && l === m[2])
+  if (end < 0) return command
+  if (lines.slice(end + 1).some(l => l.trim() !== '')) return command
+  return head
 }
 
 function alwaysDeny(command, segments, names) {
@@ -101,7 +116,12 @@ function segmentAllowed(segment) {
   if (tokens.length === 0) return false
   const word = basename(tokens[0])
   if (word === 'sac-planner') {
-    return SAC_SUBCOMMANDS.has(tokens[1]) || (tokens[1] === 'publish' && tokens.includes('--approve-hash'))
+    return (
+      SAC_SUBCOMMANDS.has(tokens[1]) ||
+      tokens[1] === 'save' ||
+      (tokens[1] === 'session' && (tokens[2] === 'start' || tokens[2] === 'end')) ||
+      (tokens[1] === 'publish' && tokens.includes('--approve-hash'))
+    )
   }
   if (READ_ONLY.has(word)) return true
   if (word === 'find') return !tokens.some(t => FIND_FORBIDDEN.includes(t))
@@ -114,11 +134,12 @@ function decide(input) {
   const command = input.tool_input?.command
   if (typeof command !== 'string') return null
   const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd()
-  const segments = segmentsOf(command)
+  const checked = stripSaveHeredoc(command)
+  const segments = segmentsOf(checked)
   const denied = alwaysDeny(command, segments, tokenNames(projectDir))
   if (denied !== null) return denied
   if (!sessionActive(join(projectDir, '.sac-planner', '.session-active'))) return null
-  if (command.includes('$(') || command.includes('`')) {
+  if (checked.includes('$(') || checked.includes('`')) {
     return `command substitution is not allowed ${SESSION_SUFFIX}`
   }
   for (const seg of segments) {

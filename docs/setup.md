@@ -104,7 +104,7 @@ Then invoke the Skill with your change request:
 
 ## Approval flow
 
-1. The Skill writes and validates the plan with `sac-planner validate <plan>`.
+1. The Skill saves and validates the plan with `sac-planner save` (plan JSON on stdin), which stores it as `.sac-planner/<changesetId>/plan.json`.
 2. `sac-planner show <plan>` renders every issue without contacting GitHub, then prints the plan hash.
 3. You review the issues and reply with an explicit approval.
 4. The Skill runs `sac-planner publish <plan> --approve-hash <hash>`, using the hash shown in step 2.

@@ -63,8 +63,8 @@ describe('plugin packaging', () => {
       'Read',
       'Grep',
       'Glob',
-      'Write',
-      'Edit',
+      'Bash(sac-planner session *)',
+      'Bash(sac-planner save *)',
       'Bash(sac-planner validate *)',
       'Bash(sac-planner show *)',
       'Bash(sac-planner state *)',
@@ -93,7 +93,11 @@ describe('plugin packaging', () => {
     const text = body(readText('skills/plan/SKILL.md'))
     const required = [
       '.sac-planner/.session-active',
-      'active <',
+      'sac-planner session start',
+      'sac-planner session end',
+      'sac-planner save',
+      "<<'SAC_PLAN_EOF'",
+      'one command per Bash call',
       'done',
       'sac-planner catalog',
       'sac-planner validate',
@@ -107,6 +111,7 @@ describe('plugin packaging', () => {
     for (const needle of required) {
       expect(text).toContain(needle)
     }
+    expect(text).not.toContain('Use the Write tool')
     expect(text).not.toContain('gh issue')
     expect(text).not.toContain('api.github.com')
   })

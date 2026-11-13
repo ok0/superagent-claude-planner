@@ -25,6 +25,8 @@ The `sac-planner` CLI provides the deterministic steps:
 - `sac-planner state <plan>`: print the saved publish state.
 - `sac-planner schema`: print the plan JSON Schema.
 - `sac-planner catalog [--json]`: print the configured repo catalog, or `no catalog configured`.
+- `sac-planner save`: read plan JSON from stdin, validate it, and store it as `.sac-planner/<changesetId>/plan.json`.
+- `sac-planner session start|end`: mark the plan session active (with the current time) or done; the Skill's guard hook reads this marker.
 
 ## Breaking changes
 

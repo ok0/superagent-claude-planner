@@ -1,5 +1,5 @@
 import { parseArgs } from 'node:util'
-import { resolve } from 'node:path'
+import { isAbsolute, relative, resolve } from 'node:path'
 import { createSuperagentClaudeProfile, SUPERAGENT_CLAUDE_KIND } from '../adapters/agent/superagent-claude.ts'
 import { createOctokitIssueHost } from '../adapters/github/octokit.ts'
 import { getAgentProfile } from '../core/agent.ts'
@@ -13,18 +13,21 @@ import { ApprovalError, ConfigError, GitHubError, IdentityError, PublishError, S
 import type { IssueHost } from '../core/github/port.ts'
 import { planHash } from '../core/hash.ts'
 import { planJsonSchema } from '../core/plan/schema.ts'
-import { readPlanFile } from '../core/plan/validate.ts'
+import { readPlanFile, validatePlan } from '../core/plan/validate.ts'
 import { publish } from '../core/publish.ts'
 import { renderAll } from '../core/render/render.ts'
 import type { RenderedIssue } from '../core/render/render.ts'
+import { projectRoot, planStoragePath, writeSessionMarker } from '../core/session.ts'
 import { loadState } from '../core/state.ts'
 import type { State } from '../core/state.ts'
+import { writeJsonAtomic } from '../core/fsutil.ts'
 
 export interface CliIo {
   out(s: string): void
   err(s: string): void
   cwd: string
   env: Readonly<Record<string, string | undefined>>
+  readStdin?: () => Promise<string>
 }
 
 export const EXIT_OK = 0,
@@ -49,6 +52,8 @@ Commands:
   state <plan>                                 Print the publish state saved next to the plan
   schema                                       Print the plan JSON Schema
   catalog [--json]                             Print the configured repo catalog, or "no catalog configured"
+  save                                         Read plan JSON from stdin, validate it, write .sac-planner/<changesetId>/plan.json
+  session start|end                            Mark the plan session active (current UTC time) or done
 
 Options:
   --config <path>          Config file (else $SAC_PLANNER_CONFIG, ./sac-planner.config.json, ~/.config/sac-planner/config.json)
@@ -316,6 +321,38 @@ export async function main(
       if (r.localPath !== undefined) io.out(`  localPath: ${r.localPath}\n`)
       if (r.contracts !== undefined && r.contracts.length > 0) io.out(`  contracts: ${r.contracts.join(', ')}\n`)
     }
+    return EXIT_OK
+  }
+
+  if (cmd === 'save') {
+    if (positionals.length !== 1) return usage(io)
+    const text = io.readStdin ? await io.readStdin() : ''
+    let json: unknown
+    try {
+      json = JSON.parse(text)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      io.out('(root): invalid JSON: ' + msg + '\n')
+      return EXIT_INVALID
+    }
+    const result = validatePlan(json)
+    if (!result.ok) {
+      for (const e of result.errors) io.out(e.path + ': ' + e.message + '\n')
+      return EXIT_INVALID
+    }
+    const path = planStoragePath(projectRoot(io.env, io.cwd), result.plan.changesetId)
+    writeJsonAtomic(path, result.plan)
+    const rel = relative(io.cwd, path)
+    const display = rel.startsWith('..') || isAbsolute(rel) ? path : rel
+    io.out('saved ' + display + '\nOK ' + planHash(result.plan) + '\n')
+    return EXIT_OK
+  }
+
+  if (cmd === 'session') {
+    const action = positionals[1]
+    if (positionals.length !== 2 || (action !== 'start' && action !== 'end')) return usage(io)
+    const content = writeSessionMarker(projectRoot(io.env, io.cwd), action)
+    io.out(action === 'start' ? 'session ' + content + '\n' : 'session done\n')
     return EXIT_OK
   }
 
