@@ -1,4 +1,4 @@
-// Spike (M2 R3): injecting baseUrl + request.fetch routes @octokit/rest 22.0.1 requests to the stub: CONFIRMED
+// Spike: injecting baseUrl + request.fetch routes @octokit/rest 22.0.1 requests to the stub: CONFIRMED
 import { Octokit } from '@octokit/rest'
 import { describe, expect, it } from 'vitest'
 import { createGitHubStub } from './support/github-stub.ts'

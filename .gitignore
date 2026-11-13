@@ -10,3 +10,6 @@ coverage/
 /.forbidden-names
 /sac-planner.config.json
 /superagent-claude.json
+.env*
+.npmrc
+*.pem
