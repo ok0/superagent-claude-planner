@@ -23,27 +23,34 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>
 
 export const SETUP_HINT =
-  'copy sac-planner.config.example.json to ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account'
+  'copy sac-planner.config.example.json to ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account; see docs/setup.md'
 export const LOGIN_HINT =
-  'set agent.login in the config to the GitHub login of the agent account to mention in issues; there is no default'
+  'set agent.login in the config to the GitHub login of the agent account to mention in issues; there is no default; see docs/setup.md'
 export const TOKEN_HINT =
-  'set it to a GitHub token of the planner account: a User-type account that differs from agent.login and is in the agent allowed author list'
+  'set it to a GitHub token of the planner account: a User-type account that differs from agent.login and is in the agent allowed author list; see docs/setup.md'
+
+export function findConfigFile(opts: {
+  path?: string
+  env: Readonly<Record<string, string | undefined>>
+  cwd: string
+}): string | undefined {
+  const cwdFile = resolve(opts.cwd, 'sac-planner.config.json')
+  const homeFile = join(opts.env.HOME ?? homedir(), '.config', 'sac-planner', 'config.json')
+  if (opts.path) {
+    return resolve(opts.cwd, opts.path)
+  }
+  if (opts.env.SAC_PLANNER_CONFIG) {
+    return resolve(opts.cwd, opts.env.SAC_PLANNER_CONFIG)
+  }
+  return [cwdFile, homeFile].find(f => existsSync(f))
+}
 
 export function loadConfig(opts: {
   path?: string
   env: Readonly<Record<string, string | undefined>>
   cwd: string
 }): Config {
-  const cwdFile = resolve(opts.cwd, 'sac-planner.config.json')
-  const homeFile = join(opts.env.HOME ?? homedir(), '.config', 'sac-planner', 'config.json')
-  let file: string | undefined
-  if (opts.path) {
-    file = resolve(opts.cwd, opts.path)
-  } else if (opts.env.SAC_PLANNER_CONFIG) {
-    file = resolve(opts.cwd, opts.env.SAC_PLANNER_CONFIG)
-  } else {
-    file = [cwdFile, homeFile].find(f => existsSync(f))
-  }
+  const file = findConfigFile(opts)
   if (file === undefined) {
     throw new ConfigError(
       'no config found; looked for --config, $SAC_PLANNER_CONFIG, ./sac-planner.config.json, ~/.config/sac-planner/config.json',

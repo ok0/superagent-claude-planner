@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrderPlaced",
+  "type": "object",
+  "required": ["orderId", "customerName", "totalCents"],
+  "properties": {
+    "orderId": { "type": "string" },
+    "customerName": { "type": "string" },
+    "totalCents": { "type": "integer" }
+  },
+  "additionalProperties": false
+}

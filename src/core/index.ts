@@ -10,6 +10,7 @@ export type { AgentProfile, AgentProfileFactory, AgentRegistry } from './agent.t
 export {
   ConfigSchema,
   loadConfig,
+  findConfigFile,
   DEFAULT_TOKEN_ENV,
   SETUP_HINT,
   LOGIN_HINT,
@@ -17,6 +18,8 @@ export {
   TOKEN_HINT,
 } from './config.ts'
 export type { Config } from './config.ts'
+export { CatalogSchema, CATALOG_HINT, loadCatalog } from './catalog.ts'
+export type { Catalog } from './catalog.ts'
 export { ConfigError, ApprovalError, IdentityError, StateError, GitHubError, PublishError } from './errors.ts'
 export {
   renderContract,

@@ -1,0 +1,13 @@
+{
+  "name": "sac-planner-local",
+  "owner": {
+    "name": "superagent-claude-planner maintainers"
+  },
+  "plugins": [
+    {
+      "name": "superagent-claude-planner",
+      "source": "./",
+      "description": "Plan one change across several repositories as coordinated GitHub issues for an issue-driven coding agent, published only after explicit approval."
+    }
+  ]
+}

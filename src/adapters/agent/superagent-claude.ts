@@ -19,6 +19,6 @@ export function createSuperagentClaudeProfile(opts: { login: string }): AgentPro
         `Sibling issues in the other repositories carry the changeset ID \`${plan.changesetId}\`.`,
       ]
     },
-    setupDoc: `The issue author must be listed in the agent's policy.allowed, must be a GitHub User account, and must differ from the agent login (${login}).`,
+    setupDoc: `The issue author must be listed in the agent's policy.allowed, must be a GitHub User account, and must differ from the agent login (${login}). See docs/setup.md.`,
   }
 }

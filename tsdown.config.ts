@@ -9,4 +9,5 @@ export default defineConfig({
   dts: false,
   clean: true,
   outputOptions: { banner: '#!/usr/bin/env node' },
+  deps: { alwaysBundle: ['@octokit/rest', 'zod'], onlyBundle: false },
 })

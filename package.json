@@ -20,7 +20,9 @@
     "format": "prettier --write \"**/*.ts\"",
     "format:check": "prettier --check \"**/*.ts\"",
     "hygiene": "node scripts/check-hygiene.ts",
-    "check": "pnpm typecheck && pnpm format:check && pnpm test && pnpm build && pnpm hygiene"
+    "check:bundle": "node scripts/check-bundle.ts",
+    "check:commits": "node scripts/check-commits.ts",
+    "check": "pnpm typecheck && pnpm format:check && pnpm test && pnpm build && pnpm check:bundle && pnpm hygiene && pnpm check:commits"
   },
   "engines": {
     "node": ">=22.19.0"

@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Orders API (synthetic)
+  version: 0.1.0
+paths:
+  /orders/{id}:
+    get:
+      summary: Get one order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, customerName, totals]
+      properties:
+        id:
+          type: string
+        customerName:
+          type: string
+        totals:
+          type: object
+          required: [subtotalCents, totalCents]
+          properties:
+            subtotalCents:
+              type: integer
+            totalCents:
+              type: integer

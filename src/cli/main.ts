@@ -5,8 +5,10 @@ import { createOctokitIssueHost } from '../adapters/github/octokit.ts'
 import { getAgentProfile } from '../core/agent.ts'
 import type { AgentProfile, AgentRegistry } from '../core/agent.ts'
 import { approvalErrorFor, checkApproval, recordApproval } from '../core/approval.ts'
-import { loadConfig, resolveToken } from '../core/config.ts'
+import { findConfigFile, loadConfig, resolveToken } from '../core/config.ts'
 import type { Config } from '../core/config.ts'
+import { loadCatalog } from '../core/catalog.ts'
+import type { Catalog } from '../core/catalog.ts'
 import { ApprovalError, ConfigError, GitHubError, IdentityError, PublishError, StateError } from '../core/errors.ts'
 import type { IssueHost } from '../core/github/port.ts'
 import { planHash } from '../core/hash.ts'
@@ -46,10 +48,11 @@ Commands:
                                                Publish one issue per repo to GitHub using the approved plan
   state <plan>                                 Print the publish state saved next to the plan
   schema                                       Print the plan JSON Schema
+  catalog [--json]                             Print the configured repo catalog, or "no catalog configured"
 
 Options:
   --config <path>          Config file (else $SAC_PLANNER_CONFIG, ./sac-planner.config.json, ~/.config/sac-planner/config.json)
-  --json                   JSON output for show
+  --json                   JSON output for show and catalog
   --hash <h>               Plan hash to approve (approve)
   --approve-hash <h>       Record approval of this hash, then publish (publish)
   --dry-run                Render the issues without a token or host (publish)
@@ -280,6 +283,39 @@ export async function main(
   if (cmd === 'schema') {
     if (positionals.length !== 1) return usage(io)
     io.out(JSON.stringify(planJsonSchema(), null, 2) + '\n')
+    return EXIT_OK
+  }
+
+  if (cmd === 'catalog') {
+    if (positionals.length !== 1) return usage(io)
+    const file = findConfigFile({ path: values.config, env: io.env, cwd: io.cwd })
+    if (file === undefined) {
+      io.out('no catalog configured\n')
+      return EXIT_OK
+    }
+    let config: Config
+    let catalog: Catalog | null
+    try {
+      config = loadConfig({ path: values.config, env: io.env, cwd: io.cwd })
+      catalog = loadCatalog(config)
+    } catch (e) {
+      if (!(e instanceof ConfigError)) throw e
+      return fail(io, e, EXIT_USAGE)
+    }
+    if (catalog === null) {
+      io.out('no catalog configured\n')
+      return EXIT_OK
+    }
+    if (values.json) {
+      io.out(JSON.stringify(catalog, null, 2) + '\n')
+      return EXIT_OK
+    }
+    io.out(`catalog: ${config.catalog} (${catalog.repos.length} repos)\n`)
+    for (const r of catalog.repos) {
+      io.out(`${r.repo}\t${r.description}\n`)
+      if (r.localPath !== undefined) io.out(`  localPath: ${r.localPath}\n`)
+      if (r.contracts !== undefined && r.contracts.length > 0) io.out(`  contracts: ${r.contracts.join(', ')}\n`)
+    }
     return EXIT_OK
   }
 

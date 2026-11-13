@@ -1,0 +1,20 @@
+{
+  "repos": [
+    {
+      "repo": "example-org/orders-api",
+      "description": "Order service; owns the orders REST API and the order-placed event",
+      "localPath": "repos/orders-api",
+      "contracts": ["contract/orders.openapi.yaml", "contract/order-placed.schema.json"]
+    },
+    {
+      "repo": "example-org/storefront",
+      "description": "Web storefront; shows order summaries",
+      "localPath": "repos/storefront"
+    },
+    {
+      "repo": "example-org/billing-worker",
+      "description": "Background worker; bills placed orders from the order-placed event",
+      "localPath": "repos/billing-worker"
+    }
+  ]
+}

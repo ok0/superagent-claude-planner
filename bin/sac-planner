@@ -1,0 +1,8 @@
+#!/bin/sh
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 2
+cli="$here/../lib/cli.js"
+if [ ! -f "$cli" ]; then
+  echo "sac-planner: $cli not found; run pnpm build in the plugin directory" >&2
+  exit 2
+fi
+exec node "$cli" "$@"
