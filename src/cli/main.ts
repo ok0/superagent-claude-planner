@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { isAbsolute, relative, resolve } from 'node:path'
 import { createSuperagentClaudeProfile, SUPERAGENT_CLAUDE_KIND } from '../adapters/agent/superagent-claude.ts'
@@ -52,7 +53,7 @@ Commands:
   state <plan>                                 Print the publish state saved next to the plan
   schema                                       Print the plan JSON Schema
   catalog [--json]                             Print the configured repo catalog, or "no catalog configured"
-  save                                         Read plan JSON from stdin, validate it, write .sac-planner/<changesetId>/plan.json
+  save [--file <path>]                         Read plan JSON from <path> (or stdin), validate it, write .sac-planner/<changesetId>/plan.json
   session start|end                            Mark the plan session active (current UTC time) or done
 
 Options:
@@ -60,8 +61,7 @@ Options:
   --json                   JSON output for show and catalog
   --hash <h>               Plan hash to approve (approve)
   --approve-hash <h>       Record approval of this hash, then publish (publish)
-  --dry-run                Render the issues without a token or host (publish)
-  -h, --help               Show this help
+  --dry-run                Render the issues without a token or host (publish)  -h, --help               Show this help
 
 Exit codes: 0 ok, 1 invalid or refused, 2 usage or config error, 3 GitHub failure
 `
@@ -111,6 +111,7 @@ export async function main(
         hash: { type: 'string' },
         'approve-hash': { type: 'string' },
         'dry-run': { type: 'boolean' },
+        file: { type: 'string' },
       },
       allowPositionals: true,
       strict: true,
@@ -326,7 +327,17 @@ export async function main(
 
   if (cmd === 'save') {
     if (positionals.length !== 1) return usage(io)
-    const text = io.readStdin ? await io.readStdin() : ''
+    let text: string
+    if (values.file !== undefined) {
+      try {
+        text = readFileSync(resolve(io.cwd, values.file), 'utf8')
+      } catch {
+        io.out('(root): cannot read ' + values.file + '\n')
+        return EXIT_INVALID
+      }
+    } else {
+      text = io.readStdin ? await io.readStdin() : ''
+    }
     let json: unknown
     try {
       json = JSON.parse(text)

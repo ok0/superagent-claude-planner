@@ -7,6 +7,7 @@ allowed-tools:
   - Read
   - Grep
   - Glob
+  - Write(./.sac-planner/draft.json)
   - Bash(sac-planner session *)
   - Bash(sac-planner save *)
   - Bash(sac-planner validate *)
@@ -30,7 +31,7 @@ The request is: $ARGUMENTS
 
 Turn the request into one plan that covers every affected repository, then publish one GitHub issue per repository only after the user explicitly approves the shown plan. You never write to GitHub yourself. The only write path is the single `sac-planner publish` command in step 10. Do not use `gh`, `curl`, or `git push`, and do not call any GitHub API directly.
 
-**Command rules.** Run one command per Bash call. Do not chain or decorate commands: no `;`, `&&`, `||`, `|`, `$?`, `echo`, `date`, redirection, or command substitution. The tool reports the exit code. Read and search files with Read, Grep, and Glob, not shell loops or cat/find pipelines. Never use Write or Edit under .sac-planner/; the sac-planner CLI writes every file there.
+**Command rules.** Run one command per Bash call. Do not chain or decorate commands: no `;`, `&&`, `||`, `|`, `$?`, `echo`, `date`, redirection, or command substitution. The tool reports the exit code. Read and search files with Read, Grep, and Glob, not shell loops or cat/find pipelines. Use Write only for the plan draft `.sac-planner/draft.json`; never write any other file there.
 
 Follow the steps in order.
 
@@ -52,15 +53,7 @@ Follow the steps in order.
 
 7. **Decompose.** Produce, without asking the user to write any of it: the repositories with their roles (`producer`, `consumer`, `both`, or `other`), one task per repository, the shared contract (summary, definition, rules, examples, and changes), the dependencies (`before`, `after`, and `reason`), and a merge-order note. Run `sac-planner schema` if you are unsure of the format.
 
-8. **Save and validate.** Save the whole plan with this exact form, the JSON between the two delimiter lines:
-
-   ```
-   sac-planner save <<'SAC_PLAN_EOF'
-   { ...the plan JSON... }
-   SAC_PLAN_EOF
-   ```
-
-   Keep the quotes around the first SAC_PLAN_EOF and put nothing after the last one. The command validates the plan and writes `.sac-planner/<changesetId>/plan.json`. It prints `saved <plan>` and `OK <hash>`, or one `path: message` line per problem and saves nothing. Fix every problem and save the whole plan again until it prints `OK <hash>`. To change a saved plan, save the whole plan again. Use the printed path as <plan> below; `sac-planner validate <plan>` re-checks it.
+8. **Save and validate.** Write the whole plan JSON to `.sac-planner/draft.json` with the Write tool, then run `sac-planner save --file .sac-planner/draft.json` (no heredoc, no braces in the Bash command). The command validates the plan and writes `.sac-planner/<changesetId>/plan.json`. It prints `saved <plan>` and `OK <hash>`, or one `path: message` line per problem and saves nothing. Fix and Write the whole plan again until it prints `OK <hash>`. To change a saved plan, Write and save the whole plan again. Use the printed path as <plan> below; `sac-planner validate <plan>` re-checks it.
 
 9. **Show and ask for approval.** Run `sac-planner show <plan>`. Present each issue (its repository, title, and key body parts) and the `Plan hash:` line verbatim. Ask the user to reply "approve" (or "승인") to publish these issues with that hash. After **any** plan edit, re-run validate, re-run `show`, present the new hash, and ask again. An earlier approval no longer counts.
 

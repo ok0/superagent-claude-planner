@@ -120,6 +120,11 @@ describe('guard-bash hook', () => {
     expect(guard(SAVE + '\n', FRESH)).toBe('allow')
   })
 
+  it('allows save --file while active and denies chained commands', () => {
+    expect(guard('sac-planner save --file .sac-planner/draft.json', FRESH)).toBe('allow')
+    expect(guard('sac-planner save --file x ; gh issue create', FRESH)).toBe('deny')
+  })
+
   it('denies heredoc forms that can run other commands while active', () => {
     const commands = [
       'sac-planner save <<SAC_PLAN_EOF\n{"a": "$(rm -rf x)"}\nSAC_PLAN_EOF',

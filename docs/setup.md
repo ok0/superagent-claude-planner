@@ -102,6 +102,8 @@ Then invoke the Skill with your change request:
 /superagent-claude-planner:plan <request>
 ```
 
+Headless runs (`claude -p`) and runbook runs must use a project directory that is not the plugin root. Run from the plugin root and Claude Code denies every Write under `.sac-planner/` as a sensitive file. For example, from a scratch project directory: `cd <scratch project> && claude -p --plugin-dir <path to this repo> --permission-mode acceptEdits ...`, with an absolute `--config` path.
+
 ## Approval flow
 
 1. The Skill saves and validates the plan with `sac-planner save` (plan JSON on stdin), which stores it as `.sac-planner/<changesetId>/plan.json`.

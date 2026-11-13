@@ -92,6 +92,46 @@ describe('save', () => {
     const r = await run(['save', 'p.json'], { cwd: d, stdin: EXAMPLE_TEXT })
     expect(r.code).toBe(2)
   })
+
+  it('saves a draft file given by --file with the same hash as stdin', async () => {
+    const d = tempDir()
+    mkdirSync(join(d, '.sac-planner'), { recursive: true })
+    writeFileSync(join(d, '.sac-planner', 'draft.json'), EXAMPLE_TEXT)
+    const r = await run(['save', '--file', '.sac-planner/draft.json'], { cwd: d })
+    expect(r.code).toBe(0)
+    const m = new RegExp('^saved \\.sac-planner/' + ID + '/plan\\.json\\nOK (\\S+)\\n$').exec(r.out)
+    expect(m).not.toBeNull()
+    expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(true)
+    const s = tempDir()
+    const viaStdin = await run(['save'], { cwd: s, stdin: EXAMPLE_TEXT })
+    expect(viaStdin.out).toBe('saved .sac-planner/' + ID + '/plan.json\nOK ' + m![1] + '\n')
+  })
+
+  it('rejects a missing --file and writes nothing', async () => {
+    const d = tempDir()
+    const r = await run(['save', '--file', '.sac-planner/draft.json'], { cwd: d })
+    expect(r.code).toBe(1)
+    expect(r.out).toBe('(root): cannot read .sac-planner/draft.json\n')
+    expect(existsSync(join(d, '.sac-planner'))).toBe(false)
+  })
+
+  it('rejects an invalid --file draft and writes no plan', async () => {
+    const d = tempDir()
+    mkdirSync(join(d, '.sac-planner'), { recursive: true })
+    writeFileSync(join(d, '.sac-planner', 'draft.json'), '{')
+    const bad = await run(['save', '--file', '.sac-planner/draft.json'], { cwd: d })
+    expect(bad.code).toBe(1)
+    expect(bad.out.startsWith('(root): invalid JSON')).toBe(true)
+    expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(false)
+    const plan = JSON.parse(EXAMPLE_TEXT) as Record<string, unknown>
+    plan.changesetId = 'X'
+    writeFileSync(join(d, '.sac-planner', 'draft.json'), JSON.stringify(plan))
+    const invalid = await run(['save', '--file', '.sac-planner/draft.json'], { cwd: d })
+    expect(invalid.code).toBe(1)
+    expect(invalid.out).toContain('changesetId')
+    expect(existsSync(join(d, '.sac-planner', ID, 'plan.json'))).toBe(false)
+    expect(existsSync(join(d, '.sac-planner', 'X', 'plan.json'))).toBe(false)
+  })
 })
 
 describe('session', () => {

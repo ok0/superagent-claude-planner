@@ -63,6 +63,7 @@ describe('plugin packaging', () => {
       'Read',
       'Grep',
       'Glob',
+      'Write(./.sac-planner/draft.json)',
       'Bash(sac-planner session *)',
       'Bash(sac-planner save *)',
       'Bash(sac-planner validate *)',
@@ -76,6 +77,7 @@ describe('plugin packaging', () => {
     for (const entry of entries) {
       expect(entry).not.toMatch(/\bgh\b|curl|wget|git push/)
     }
+    expect(entries).toContain('Write(./.sac-planner/draft.json)')
     const publishEntries = entries.filter(e => e.includes('publish'))
     expect(publishEntries).toHaveLength(1)
     expect(publishEntries[0]).toContain('--approve-hash')
@@ -95,8 +97,8 @@ describe('plugin packaging', () => {
       '.sac-planner/.session-active',
       'sac-planner session start',
       'sac-planner session end',
-      'sac-planner save',
-      "<<'SAC_PLAN_EOF'",
+      'sac-planner save --file',
+      '.sac-planner/draft.json',
       'one command per Bash call',
       'done',
       'sac-planner catalog',
@@ -112,6 +114,7 @@ describe('plugin packaging', () => {
       expect(text).toContain(needle)
     }
     expect(text).not.toContain('Use the Write tool')
+    expect(text).not.toContain('SAC_PLAN_EOF')
     expect(text).not.toContain('gh issue')
     expect(text).not.toContain('api.github.com')
   })
