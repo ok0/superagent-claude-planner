@@ -51,6 +51,7 @@ describe('plugin packaging', () => {
   it('plugin manifest is named superagent-claude-planner', () => {
     const plugin = JSON.parse(readText('.claude-plugin/plugin.json'))
     expect(plugin.name).toBe('superagent-claude-planner')
+    expect(plugin.version).toBe(JSON.parse(readText('package.json')).version)
     const marketplace = JSON.parse(readText('.claude-plugin/marketplace.json'))
     expect(marketplace.plugins[0].name).toBe('superagent-claude-planner')
     expect(marketplace.plugins[0].source).toBe('./')
