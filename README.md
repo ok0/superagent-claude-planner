@@ -67,7 +67,9 @@ The `sac-planner` CLI provides the deterministic steps:
 
 ## Works with superagent-claude
 
-superagent-claude is a proactive coding agent for GitHub repositories. It acts when an allowed person mentions its account, and answers with a pull request ([npm](https://www.npmjs.com/package/superagent-claude)). The planner publishes one issue per repository, each mentioning the configured agent login (`agent.login`). superagent-claude picks up each issue and opens a pull request, and the shared contract and merge order keep the pull requests consistent. The agent boundary is a generic adapter (`agent.kind`). superagent-claude is the profile shipped today, and another issue-driven agent can be supported by adding an adapter, without changing the plan format or the publish flow.
+![superagent-claude-planner and superagent-claude: each works on its own, and the planner's GitHub issues can optionally feed the agent](docs/assets/works-with.svg)
+
+Each tool works on its own, and they can be used together. superagent-claude is a proactive coding agent for GitHub repositories. It acts when an allowed person mentions its account, and answers with a pull request ([npm](https://www.npmjs.com/package/superagent-claude)). The planner publishes one issue per repository, each mentioning the configured agent login (`agent.login`). superagent-claude picks up each issue and opens a pull request, and the shared contract and merge order keep the pull requests consistent. The agent boundary is a generic adapter (`agent.kind`). superagent-claude is the profile shipped today, and another issue-driven agent can be supported by adding an adapter, without changing the plan format or the publish flow.
 
 ## Breaking changes
 
