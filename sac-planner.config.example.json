@@ -1,0 +1,4 @@
+{
+  "agent": { "kind": "superagent-claude", "login": "<agent-login>" },
+  "github": { "tokenEnv": "PLANNER_GITHUB_TOKEN" }
+}

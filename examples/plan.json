@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "changesetId": "add-order-discount",
+  "title": "Add discount amount to order totals",
+  "request": {
+    "text": "Show the discount applied to an order on the order summary page.",
+    "url": "https://example.com/requests/42"
+  },
+  "contract": {
+    "summary": "GET /orders/{id} returns a new integer field discountCents in totals.",
+    "format": "openapi",
+    "definition": "components:\n  schemas:\n    OrderTotals:\n      type: object\n      required: [subtotalCents, discountCents, totalCents]\n      properties:\n        subtotalCents: { type: integer }\n        discountCents: { type: integer, minimum: 0 }\n        totalCents: { type: integer }",
+    "rules": ["discountCents is 0 when no discount applies.", "totalCents equals subtotalCents minus discountCents."],
+    "examples": [{ "name": "Order with discount", "payload": "{\"totals\":{\"subtotalCents\":5000,\"discountCents\":500,\"totalCents\":4500}}" }],
+    "changes": [{ "kind": "add", "target": "OrderTotals.discountCents", "detail": "New required integer field." }]
+  },
+  "breaking": { "isBreaking": false },
+  "repos": [
+    { "repo": "example-org/orders-api", "role": "producer", "task": { "summary": "Return discountCents in order totals", "details": "Compute the discount from applied promotions and add discountCents to OrderTotals in GET /orders/{id}." } },
+    { "repo": "example-org/storefront", "role": "consumer", "task": { "summary": "Show the order discount on the summary page", "details": "Read totals.discountCents from GET /orders/{id} and show it above the total when it is greater than 0." } }
+  ],
+  "dependencies": [{ "before": "example-org/orders-api", "after": "example-org/storefront", "reason": "The storefront reads the new field." }],
+  "mergeOrderNote": "Merge and deploy orders-api before merging storefront."
+}

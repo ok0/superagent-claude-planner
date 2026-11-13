@@ -1,3 +1,9 @@
 .ensemble
 .doc
 .r
+node_modules/
+/lib/
+coverage/
+.sac-planner/
+*.log
+.DS_Store

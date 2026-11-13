@@ -1,0 +1,5 @@
+lib/
+coverage/
+.ensemble/
+.r/
+.doc/
