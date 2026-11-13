@@ -23,7 +23,7 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>
 
 export const SETUP_HINT =
-  'copy sac-planner.config.example.json to ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account; see docs/setup.md'
+  'create ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account; see docs/setup.md (Config file) in the superagent-claude-planner repository'
 export const LOGIN_HINT =
   'set agent.login in the config to the GitHub login of the agent account to mention in issues; there is no default; see docs/setup.md'
 export const TOKEN_HINT =

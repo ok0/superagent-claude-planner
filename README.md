@@ -1,110 +1,57 @@
 # superagent-claude-planner
 
-Plan one change that spans several repositories, then publish it as one GitHub issue per repository for an issue-driven coding agent. All issues share one contract and a merge order, so the agent's pull requests can land in the right sequence.
+superagent-claude-planner is a Claude Code plugin that plans one change across several GitHub repositories. You describe the change once. It reads the repositories, drafts a shared contract and a merge order, and publishes one GitHub issue per repository for an issue-driven coding agent, only after you approve the exact plan it showed you. Each issue mentions the agent, so its pull requests can land in the right order.
 
 ![superagent-claude-planner flow](docs/assets/flow.svg)
 
-## Install
+## Quick start
 
 ```sh
 npm i -g superagent-claude-planner
-sac-planner --help
+claude plugin marketplace add <owner>/superagent-claude-planner
+claude plugin install superagent-claude-planner@sac-planner-local
+export PLANNER_GITHUB_TOKEN=<planner account token>   # before you start Claude Code
 ```
 
-It needs Node.js 22.19 or later. `npx superagent-claude-planner --help` runs it without a global install.
-
-The Claude Code plugin installs from this repository's marketplace: see [Plugin install](docs/setup.md#plugin-install).
-
-## Configuration
-
-The CLI reads the config from the first source that applies, in this order:
-
-1. `--config <path>`
-2. `$SAC_PLANNER_CONFIG`
-3. `./sac-planner.config.json` in the current directory
-4. `~/.config/sac-planner/config.json`
-
-A minimal config:
+Save one config file as `~/.config/sac-planner/config.json`:
 
 ```json
 {
-  "agent": { "kind": "superagent-claude", "login": "<agent-login>" },
-  "github": { "tokenEnv": "PLANNER_GITHUB_TOKEN" }
+  "agent": { "kind": "superagent-claude", "login": "<agent-login>" }
 }
 ```
 
-The planner token is read from `PLANNER_GITHUB_TOKEN` (or the variable named by `github.tokenEnv`) and is never written to files. See [Config file](docs/setup.md#config-file) for every option.
-
-## Operator setup
-
-The planner runs as its own machine account. That account needs a token with issue write access on the target repositories. The agent that picks up the issues has its own requirements, such as its account and start conditions. See [docs/setup.md](docs/setup.md) for the full setup.
-
-## Usage
-
-### Skill (Claude Code plugin)
-
-Invoke the Skill from Claude Code with your change request:
+Then open Claude Code in your own project directory and type:
 
 ```
 /superagent-claude-planner:plan <request>
 ```
 
-The Skill reads the repositories, drafts a plan, validates it, shows the issues and the plan hash, and publishes only after you explicitly approve.
+It needs Node.js 22.19 or later. `<owner>/superagent-claude-planner` is the GitHub repository of this plugin. The Skill calls `sac-planner` from your `PATH`, so install the package globally. `npx superagent-claude-planner --help` runs the CLI on its own without an install. Every command finds the config by itself, so you never pass a path: a `./sac-planner.config.json` in the project directory comes first, then `~/.config/sac-planner/config.json`. The token belongs to the planner's own GitHub account, needs issue write access on the target repositories, and is never written to files. Run `claude` from your own project, not from the root of the plugin repository, where Claude Code blocks the plan draft. See [docs/setup.md](docs/setup.md) for the planner account, the token, what the agent needs, and the optional repo catalog.
 
-### CLI
+## Documentation
 
-The `sac-planner` CLI provides the deterministic steps:
-
-- `sac-planner validate <plan>`: validate a plan file and print `OK <hash>`.
-- `sac-planner show <plan>`: render every issue without contacting GitHub, then print the plan hash.
-- `sac-planner approve <plan> --hash <h>`: record approval of a shown hash.
-- `sac-planner publish <plan> --approve-hash <h>`: publish one issue per repo using the approved plan.
-- `sac-planner state <plan>`: print the saved publish state.
-- `sac-planner schema`: print the plan JSON Schema.
-- `sac-planner catalog [--json]`: print the configured repo catalog, or `no catalog configured`.
-- `sac-planner save [--file <path>]`: read plan JSON from <path> or stdin, validate it, and store it as `.sac-planner/<changesetId>/plan.json`.
-- `sac-planner session start|end`: mark the plan session active (with the current time) or done; the Skill's guard hook reads this marker.
+- [Setup](docs/setup.md): planner account, token, config, catalog, plugin install
+- [CLI reference](docs/setup.md#cli-reference): every `sac-planner` command
+- [Release](docs/release.md): release procedure and checks
 
 ## Works with superagent-claude
 
 ![superagent-claude-planner and superagent-claude: each works on its own, and the planner's GitHub issues can optionally feed the agent](docs/assets/works-with.svg)
 
-Each tool works on its own, and they can be used together. superagent-claude is a proactive coding agent for GitHub repositories. It acts when an allowed person mentions its account, and answers with a pull request ([npm](https://www.npmjs.com/package/superagent-claude)). The planner publishes one issue per repository, each mentioning the configured agent login (`agent.login`). superagent-claude picks up each issue and opens a pull request, and the shared contract and merge order keep the pull requests consistent. The agent boundary is a generic adapter (`agent.kind`). superagent-claude is the profile shipped today, and another issue-driven agent can be supported by adding an adapter, without changing the plan format or the publish flow.
+Each tool works on its own, and they can be used together. [superagent-claude](https://www.npmjs.com/package/superagent-claude) is a proactive coding agent for GitHub repositories. It acts when an allowed person mentions its account, handles one request in one repository at a time, and answers with a pull request. The planner splits a change that spans several repositories into one issue per repository, with a shared contract and a merge order, and mentions the agent (`agent.login`) in each issue. superagent-claude then works through those issues like any other request. The agent boundary is a generic adapter (`agent.kind`). superagent-claude is the profile shipped today, and another issue-driven agent can be added as an adapter without changing the plan format or the publish flow.
 
-## Breaking changes
+## Approval and safety
 
-When a change removes or renames something, the Skill stops and asks you to choose between two strategies:
+The Skill confirms the repositories with you before it drafts anything, and it shows every issue and a plan hash before it publishes. Approval is bound to that hash, so any edit to the plan needs a new approval. When a change removes or renames something, the Skill stops and asks you to choose. **(A) staged** adds the new form next to the old one and removes the old form later. **(B) at-once** changes the producer and the consumers together and merges them in order. The choice is always yours. The model has no GitHub write path: publishing is one deterministic CLI command, and a guard hook denies `gh`, direct GitHub API calls, and any use of the planner token in Bash. The planner makes no assumption about the language, framework, build tool, contract format, or organization of the repositories it plans.
 
-- **(A) staged**: add the new form alongside the old one, migrate consumers, and remove the old form in a later change. Safe to deploy in any order, with more steps.
-- **(B) at-once**: change the producer and consumers together and merge in the given order. Fewer steps, with brief breakage between merges.
+## CLI
 
-The choice is always made by you. The Skill explains both options and records your answer in the plan.
-
-## Safety model
-
-- Approval is bound to the plan hash. Any edit to the plan invalidates the earlier approval.
-- The language model has no GitHub write path. Publishing is a deterministic CLI command that runs only after approval.
-- A guard hook denies `gh`, direct GitHub API calls, and any use of the planner token in Bash, at all times. While a planning session is active, it also restricts Bash to read-only commands and the `sac-planner` commands.
-
-## Generic design
-
-The planner makes no assumption about the language, framework, build tool, contract format, or target organization of the repositories it plans. The catalog is optional. Without it, the Skill asks for the repositories and reads them directly.
-
-## Documentation
-
-- [Setup](docs/setup.md): planner account, token, config, catalog, plugin install
-- [Release](docs/release.md): release procedure and checks
+The Skill runs each deterministic step through the `sac-planner` CLI, and you can run the same commands yourself: `save`, `validate`, `show`, `approve`, `publish`, `state`, `schema`, `catalog`, and `session`. `sac-planner --help` lists them, and the [CLI reference](docs/setup.md#cli-reference) describes each one. Every command finds the config by itself. For scripts and headless runs, `--config <path>` or `$SAC_PLANNER_CONFIG` points it at another file.
 
 ## Development
 
-- `pnpm check` runs the full set of checks: typecheck, format check, tests, build, bundle check, hygiene check, and commit-message check.
-- `pnpm check:commits` checks commit messages against Conventional Commits.
-- Commit messages follow Conventional Commits.
-- `pnpm release:check` builds, checks the npm pack contents, and installs the tarball in a clean project.
-
-## Sample fixture
-
-`fixtures/synthetic-shop/` contains three small placeholder repositories, a sample catalog, and sample configs. Use them to try the Skill without real repositories.
+`pnpm check` runs typecheck, format check, tests, build, bundle check, hygiene check, and commit-message check. `pnpm release:check` builds, checks the npm pack contents, and installs the tarball in a clean project. Commit messages follow Conventional Commits. `fixtures/synthetic-shop/` contains three small placeholder repositories, a sample catalog, and sample configs, so you can try the Skill without real repositories. To load the plugin from a local checkout, see [Plugin install](docs/setup.md#plugin-install).
 
 ## License
 

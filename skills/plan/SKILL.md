@@ -37,7 +37,7 @@ Follow the steps in order.
 
 1. **Start the session.** Run `sac-planner session start` from the project root (the working directory at invocation; do not change directory). It writes `.sac-planner/.session-active` with the current UTC time, and also refreshes a marker left by an earlier session. The guard hook restricts Bash commands while that file says `active`.
 
-2. **Refine the request.** Restate the request in one or two sentences. Ask only the questions whose answers change how the change is split across repositories. If the user passed a config path, add `--config <path>` to every `sac-planner` command you run.
+2. **Refine the request.** Restate the request in one or two sentences. Ask only the questions whose answers change how the change is split across repositories. The CLI finds the config by itself. Only if the user names a config file, add `--config <path>` to every `sac-planner` command you run.
 
 3. **Check the catalog.** Run `sac-planner catalog`. If the output is `no catalog configured`, use direct mode. Otherwise use hybrid mode: shortlist the candidate repositories from their descriptions and contract locations. If the command exits with code 2, show the error message and point the user to `docs/setup.md`.
 

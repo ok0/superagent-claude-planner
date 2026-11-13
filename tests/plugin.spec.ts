@@ -1,7 +1,19 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const SKILL_PATH = join(ROOT, 'skills', 'plan', 'SKILL.md')
@@ -131,5 +143,77 @@ describe('plugin packaging', () => {
     expect(confirm).toBeLessThan(save)
     expect(save).toBeLessThan(approve)
     expect(text).toContain('separate from the approval in step 9')
+  })
+})
+
+describe('launcher fallback', () => {
+  const SYS = '/usr/bin:/bin'
+  const NODE_DIR = dirname(process.execPath)
+  const temps: string[] = []
+
+  afterEach(() => {
+    for (const t of temps.splice(0)) rmSync(t, { recursive: true, force: true })
+  })
+
+  function plugin(withLib: boolean): string {
+    const d = mkdtempSync(join(tmpdir(), 'sac-launcher-'))
+    temps.push(d)
+    mkdirSync(join(d, 'bin'))
+    copyFileSync(join(ROOT, 'bin', 'sac-planner'), join(d, 'bin', 'sac-planner'))
+    chmodSync(join(d, 'bin', 'sac-planner'), 0o755)
+    if (withLib) {
+      mkdirSync(join(d, 'lib'))
+      writeFileSync(join(d, 'lib', 'cli.js'), "console.log('local ' + process.argv.slice(2).join(' '))\n")
+    }
+    return d
+  }
+
+  function fakeGlobal(): string {
+    const g = mkdtempSync(join(tmpdir(), 'sac-global-'))
+    temps.push(g)
+    const bin = join(g, 'sac-planner')
+    writeFileSync(bin, '#!/bin/sh\necho "global $*"\n')
+    chmodSync(bin, 0o755)
+    return g
+  }
+
+  function launch(dir: string, path: string) {
+    return spawnSync(join(dir, 'bin', 'sac-planner'), ['--help'], {
+      encoding: 'utf8',
+      timeout: 5000,
+      env: { PATH: path, HOME: tmpdir() },
+    })
+  }
+
+  it('uses the local build when lib/cli.js exists', () => {
+    const d = plugin(true)
+    const g = fakeGlobal()
+    const r = launch(d, `${d}/bin:${g}:${NODE_DIR}:${SYS}`)
+    expect(r.status).toBe(0)
+    expect(r.stdout.trim()).toBe('local --help')
+  })
+
+  it('falls back to another sac-planner on PATH when lib/ is missing', () => {
+    const d = plugin(false)
+    const g = fakeGlobal()
+    const r = launch(d, `${d}/bin:${g}:${SYS}`)
+    expect(r.status).toBe(0)
+    expect(r.stdout.trim()).toBe('global --help')
+  })
+
+  it('prints an install hint when no other CLI exists', () => {
+    const d = plugin(false)
+    const r = launch(d, `${d}/bin:${SYS}`)
+    expect(r.status).toBe(2)
+    expect(r.stderr).toContain('npm i -g superagent-claude-planner')
+    expect(r.stderr).toContain('docs/setup.md')
+  })
+
+  it('does not loop through another launcher copy without lib/', () => {
+    const a = plugin(false)
+    const b = plugin(false)
+    const r = launch(a, `${a}/bin:${b}/bin:${SYS}`)
+    expect(r.status).toBe(2)
+    expect(r.stderr).toContain('npm i -g superagent-claude-planner')
   })
 })

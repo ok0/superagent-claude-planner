@@ -16,6 +16,12 @@ describe('setup hints', () => {
     }
   })
 
+  it('setup hint does not name a file missing from the npm package', () => {
+    expect(SETUP_HINT).not.toContain('example')
+    expect(SETUP_HINT).toContain('~/.config/sac-planner/config.json')
+    expect(SETUP_HINT).toContain('docs/setup.md')
+  })
+
   it('missing token error references docs/setup.md', () => {
     const config = ConfigSchema.parse({ agent: { login: 'x' } })
     let caught: unknown
