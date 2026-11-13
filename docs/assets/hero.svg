@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" role="img" aria-labelledby="t d">
+  <title id="t">One conversation, many repositories</title>
+  <desc id="d">You describe one change in Claude Code: migrate the payments API to v2 in every repo. The planner turns it into one plan with a hash, a shared contract and a merge order. You approve it once, and one GitHub issue lands in each of five repositories at the same time, numbered in merge order: shared-sdk first, payments-service second, then web-app, mobile-app and notifications.</desc>
+  <style>
+    :root {
+      --bg: #fbfaf8; --lane: #f3f1ed; --node: #ffffff;
+      --ink: #1c1917; --muted: #6b645c; --line: #a8a29e;
+      --accent: #d4a72c; --accent-ink: #7d4e00; --accent-bg: #fff8c5; --on-accent: #1c1917;
+      --face: system-ui, -apple-system, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117; --lane: #1c2128; --node: #161b22;
+        --ink: #e6edf3; --muted: #8b949e; --line: #30363d;
+        --accent: #e3b341; --accent-ink: #e3b341; --accent-bg: rgba(187, 128, 9, 0.15); --on-accent: #0d1117;
+      }
+    }
+    text { font-family: var(--face); fill: var(--ink); }
+    .mono { font-family: var(--mono); }
+    .muted { fill: var(--muted); }
+    .label { font-size: 11px; letter-spacing: .12em; fill: var(--muted); }
+    .bg { fill: var(--bg); stroke: var(--line); }
+    .node { fill: var(--node); stroke: var(--ink); stroke-width: 1.25; }
+    .repo { fill: var(--node); stroke: var(--line); stroke-width: 1.25; }
+    .cover { fill: var(--node); }
+    .wire { fill: none; stroke: var(--accent); stroke-width: 2.25; stroke-linecap: butt; stroke-dasharray: 1; }
+    .tip { fill: var(--accent); }
+    .pill { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.25; }
+    .pill-t { font-size: 12px; fill: var(--accent-ink); }
+    .dot-off { fill: none; stroke: var(--line); stroke-width: 1.25; }
+    .num-off { font-size: 12px; fill: var(--muted); }
+    .dot-on { fill: var(--accent); }
+    .num-on { font-size: 12px; font-weight: 700; fill: var(--on-accent); }
+    .stamp { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.75; }
+    .stamp-t { font-size: 12px; font-weight: 700; letter-spacing: .16em; fill: var(--accent-ink); }
+
+    /* Base styles are the finished frame; animations replay the story every 7s. */
+    .a, .cover { transform-box: fill-box; animation-duration: 7s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+    .cover { transform-origin: 100% 50%; transform: scaleX(0); }
+    .pop, .stampg { transform-origin: 50% 50%; }
+    .stampg { transform: rotate(-6deg); }
+
+    #scene { animation: scene 7s infinite; }
+    #bubble { animation-name: bubble; }
+    #c1 { animation-name: type1; }
+    #c2 { animation-name: type2; }
+    #w0 { animation-name: w0; }
+    #tip0 { animation-name: tip0; }
+    #plan { animation-name: plan; }
+    #stamp { animation-name: stamp; }
+    .fan { animation-name: fan; }
+    .fan-tip { animation-name: fantip; }
+    .pop { animation-name: issue; }
+    .o1 { animation-name: o1; } .o2 { animation-name: o2; } .o3 { animation-name: o3; }
+
+    @keyframes scene  { 0%, 87% { opacity: 1 } 95%, 100% { opacity: 0 } }
+    @keyframes bubble { 0% { opacity: 0; transform: translateY(6px) } 4%, 100% { opacity: 1; transform: none } }
+    @keyframes type1  { 0%, 4% { transform: scaleX(1) } 12%, 100% { transform: scaleX(0) } }
+    @keyframes type2  { 0%, 12% { transform: scaleX(1) } 20%, 100% { transform: scaleX(0) } }
+    @keyframes w0     { 0%, 20% { stroke-dashoffset: 1 } 24%, 100% { stroke-dashoffset: 0 } }
+    @keyframes tip0   { 0%, 23% { opacity: 0 } 24%, 100% { opacity: 1 } }
+    @keyframes plan   { 0%, 23% { opacity: 0; transform: translateY(8px) } 28%, 100% { opacity: 1; transform: none } }
+    @keyframes stamp  { 0%, 30% { opacity: 0; transform: rotate(-6deg) scale(1.6) } 34% { opacity: 1; transform: rotate(-6deg) scale(.95) } 36%, 100% { opacity: 1; transform: rotate(-6deg) scale(1) } }
+    /* All five repos receive their issue at the same moment. */
+    @keyframes fan    { 0%, 40% { stroke-dashoffset: 1 } 48%, 100% { stroke-dashoffset: 0 } }
+    @keyframes fantip { 0%, 47% { opacity: 0 } 48%, 100% { opacity: 1 } }
+    @keyframes issue  { 0%, 48% { opacity: 0; transform: scale(.6) } 51% { opacity: 1; transform: scale(1.1) } 53%, 100% { opacity: 1; transform: none } }
+    /* Merge order stays sequential: that part really is ordered. */
+    @keyframes o1 { 0%, 62% { opacity: 0 } 65%, 100% { opacity: 1 } }
+    @keyframes o2 { 0%, 69% { opacity: 0 } 72%, 100% { opacity: 1 } }
+    @keyframes o3 { 0%, 76% { opacity: 0 } 79%, 100% { opacity: 1 } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #scene, .a, .cover { animation: none !important; }
+    }
+  </style>
+
+  <rect class="bg" x="0.5" y="0.5" width="959" height="419" rx="12"/>
+
+  <g id="scene">
+    <!-- You -->
+    <text class="label" x="40" y="138">YOU · CLAUDE CODE</text>
+    <g id="bubble" class="a">
+      <rect class="node" x="40" y="150" width="232" height="96" rx="14"/>
+      <text x="62" y="191" font-size="17">Migrate payments API</text>
+      <text x="62" y="219" font-size="17">to v2 in every repo</text>
+    </g>
+    <rect id="c1" class="cover" x="58" y="173" width="206" height="26"/>
+    <rect id="c2" class="cover" x="58" y="201" width="206" height="26"/>
+
+    <path id="w0" class="wire a" pathLength="1" d="M272 198 H336"/>
+    <polygon id="tip0" class="tip a" points="336,192.5 345,198 336,203.5"/>
+
+    <!-- Plan -->
+    <g id="plan" class="a">
+      <rect class="node" x="345" y="120" width="200" height="156" rx="10"/>
+      <text class="label" x="365" y="147">PLAN</text>
+      <text class="mono" x="365" y="175" font-size="20">3f9a2c</text>
+      <line x1="365" y1="189" x2="525" y2="189" stroke="var(--line)"/>
+      <text class="muted" x="365" y="211" font-size="12">contract</text>
+      <text class="mono" x="525" y="211" font-size="12" text-anchor="end">payments-v2</text>
+      <text class="muted" x="365" y="231" font-size="12">merge order</text>
+      <text class="mono" x="525" y="231" font-size="12" text-anchor="end">3 steps</text>
+    </g>
+    <g id="stamp" class="a stampg">
+      <rect class="stamp" x="365" y="243" width="106" height="24" rx="4"/>
+      <text class="stamp-t" x="418" y="259.5" text-anchor="middle">APPROVED</text>
+    </g>
+
+    <!-- Fan-out: five wires drawn together, arrowheads land together -->
+    <path class="wire a fan" pathLength="1" d="M545 198 C585 198 585 70 621 70"/>
+    <path class="wire a fan" pathLength="1" d="M545 198 C585 198 585 134 621 134"/>
+    <path class="wire a fan" pathLength="1" d="M545 198 H621"/>
+    <path class="wire a fan" pathLength="1" d="M545 198 C585 198 585 262 621 262"/>
+    <path class="wire a fan" pathLength="1" d="M545 198 C585 198 585 326 621 326"/>
+    <polygon class="tip a fan-tip" points="620,64.5 629,70 620,75.5"/>
+    <polygon class="tip a fan-tip" points="620,128.5 629,134 620,139.5"/>
+    <polygon class="tip a fan-tip" points="620,192.5 629,198 620,203.5"/>
+    <polygon class="tip a fan-tip" points="620,256.5 629,262 620,267.5"/>
+    <polygon class="tip a fan-tip" points="620,320.5 629,326 620,331.5"/>
+
+    <!-- Repos: x = 630, y = 44, 108, 172, 236, 300 -->
+    <g>
+      <rect class="repo" x="630" y="44" width="300" height="52" rx="8"/>
+      <text class="mono" x="646" y="67" font-size="14">shared-sdk</text>
+      <text class="muted" x="646" y="84" font-size="11.5">contract: payments-v2</text>
+      <g class="a pop"><rect class="pill" x="796" y="59" width="80" height="22" rx="11"/><text class="pill-t mono" x="836" y="74" text-anchor="middle">issue #12</text></g>
+      <circle class="dot-off" cx="905" cy="70" r="12"/><text class="num-off" x="905" y="74.5" text-anchor="middle">1</text>
+      <g class="a o1"><circle class="dot-on" cx="905" cy="70" r="12"/><text class="num-on" x="905" y="74.5" text-anchor="middle">1</text></g>
+    </g>
+    <g>
+      <rect class="repo" x="630" y="108" width="300" height="52" rx="8"/>
+      <text class="mono" x="646" y="131" font-size="14">payments-service</text>
+      <text class="muted" x="646" y="148" font-size="11.5">contract: payments-v2</text>
+      <g class="a pop"><rect class="pill" x="796" y="123" width="80" height="22" rx="11"/><text class="pill-t mono" x="836" y="138" text-anchor="middle">issue #87</text></g>
+      <circle class="dot-off" cx="905" cy="134" r="12"/><text class="num-off" x="905" y="138.5" text-anchor="middle">2</text>
+      <g class="a o2"><circle class="dot-on" cx="905" cy="134" r="12"/><text class="num-on" x="905" y="138.5" text-anchor="middle">2</text></g>
+    </g>
+    <g>
+      <rect class="repo" x="630" y="172" width="300" height="52" rx="8"/>
+      <text class="mono" x="646" y="195" font-size="14">web-app</text>
+      <text class="muted" x="646" y="212" font-size="11.5">contract: payments-v2</text>
+      <g class="a pop"><rect class="pill" x="796" y="187" width="80" height="22" rx="11"/><text class="pill-t mono" x="836" y="202" text-anchor="middle">issue #204</text></g>
+      <circle class="dot-off" cx="905" cy="198" r="12"/><text class="num-off" x="905" y="202.5" text-anchor="middle">3</text>
+      <g class="a o3"><circle class="dot-on" cx="905" cy="198" r="12"/><text class="num-on" x="905" y="202.5" text-anchor="middle">3</text></g>
+    </g>
+    <g>
+      <rect class="repo" x="630" y="236" width="300" height="52" rx="8"/>
+      <text class="mono" x="646" y="259" font-size="14">mobile-app</text>
+      <text class="muted" x="646" y="276" font-size="11.5">contract: payments-v2</text>
+      <g class="a pop"><rect class="pill" x="796" y="251" width="80" height="22" rx="11"/><text class="pill-t mono" x="836" y="266" text-anchor="middle">issue #56</text></g>
+      <circle class="dot-off" cx="905" cy="262" r="12"/><text class="num-off" x="905" y="266.5" text-anchor="middle">3</text>
+      <g class="a o3"><circle class="dot-on" cx="905" cy="262" r="12"/><text class="num-on" x="905" y="266.5" text-anchor="middle">3</text></g>
+    </g>
+    <g>
+      <rect class="repo" x="630" y="300" width="300" height="52" rx="8"/>
+      <text class="mono" x="646" y="323" font-size="14">notifications</text>
+      <text class="muted" x="646" y="340" font-size="11.5">contract: payments-v2</text>
+      <g class="a pop"><rect class="pill" x="796" y="315" width="80" height="22" rx="11"/><text class="pill-t mono" x="836" y="330" text-anchor="middle">issue #31</text></g>
+      <circle class="dot-off" cx="905" cy="326" r="12"/><text class="num-off" x="905" y="330.5" text-anchor="middle">3</text>
+      <g class="a o3"><circle class="dot-on" cx="905" cy="326" r="12"/><text class="num-on" x="905" y="330.5" text-anchor="middle">3</text></g>
+    </g>
+  </g>
+
+  <text x="480" y="394" font-size="15" text-anchor="middle">1 conversation <tspan class="muted">·</tspan> 1 approval <tspan class="muted">·</tspan> 5 repos</text>
+</svg>

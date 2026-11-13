@@ -1,6 +1,10 @@
 # superagent-claude-planner
 
+![One conversation, one approved plan, one GitHub issue in each of five repositories at once, in merge order](docs/assets/hero.svg)
+
 superagent-claude-planner is a Claude Code plugin that plans one change across several GitHub repositories. You describe the change once. It reads the repositories, drafts a shared contract and a merge order, and publishes one GitHub issue per repository for an issue-driven coding agent, only after you approve the exact plan it showed you. Each issue mentions the agent, so its pull requests can land in the right order.
+
+## How it works
 
 ![superagent-claude-planner flow](docs/assets/flow.svg)
 
