@@ -7,3 +7,4 @@ coverage/
 .sac-planner/
 *.log
 .DS_Store
+/.forbidden-names

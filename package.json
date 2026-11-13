@@ -4,18 +4,27 @@
   "description": "Plans one change across several repositories as coordinated GitHub issues for an issue-driven coding agent.",
   "private": true,
   "type": "module",
-  "bin": { "sac-planner": "lib/cli.js" },
-  "exports": { ".": "./lib/index.js" },
-  "files": ["lib"],
+  "bin": {
+    "sac-planner": "lib/cli.js"
+  },
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "build": "tsdown && node -e \"require('node:fs').chmodSync('lib/cli.js', 0o755)\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "format": "prettier --write \"**/*.ts\"",
     "format:check": "prettier --check \"**/*.ts\"",
-    "check": "pnpm typecheck && pnpm format:check && pnpm test && pnpm build"
+    "hygiene": "node scripts/check-hygiene.ts",
+    "check": "pnpm typecheck && pnpm format:check && pnpm test && pnpm build && pnpm hygiene"
   },
-  "engines": { "node": ">=22.19.0" },
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "packageManager": "pnpm@11.28.11",
   "devDependencies": {
     "@types/node": "22.20.5",
@@ -24,5 +33,8 @@
     "typescript": "6.0.3",
     "vitest": "5.1.0"
   },
-  "dependencies": { "zod": "4.6.7" }
+  "dependencies": {
+    "@octokit/rest": "22.0.1",
+    "zod": "4.6.7"
+  }
 }

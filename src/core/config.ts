@@ -26,6 +26,8 @@ export const SETUP_HINT =
   'copy sac-planner.config.example.json to ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account'
 export const LOGIN_HINT =
   'set agent.login in the config to the GitHub login of the agent account to mention in issues; there is no default'
+export const TOKEN_HINT =
+  'set it to a GitHub token of the planner account: a User-type account that differs from agent.login and is in the agent allowed author list'
 
 export function loadConfig(opts: {
   path?: string
@@ -78,4 +80,12 @@ export function loadConfig(opts: {
     return { ...config, catalog: resolve(dirname(file), config.catalog) }
   }
   return config
+}
+
+export function resolveToken(config: Config, env: Readonly<Record<string, string | undefined>>): string {
+  const value = (env[config.github.tokenEnv] ?? '').trim()
+  if (value.length === 0) {
+    throw new ConfigError(`environment variable ${config.github.tokenEnv} is not set (github.tokenEnv)`, TOKEN_HINT)
+  }
+  return value
 }
