@@ -1,6 +1,6 @@
 {
   "name": "superagent-claude-planner",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Plans one change across several repositories as coordinated GitHub issues for an issue-driven coding agent.",
   "license": "MIT",
   "keywords": ["github", "issues", "planner", "multi-repo", "claude-code", "agent", "cli"],
