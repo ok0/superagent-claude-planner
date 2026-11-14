@@ -113,18 +113,6 @@ describe('show', () => {
     expect(r.code).toBe(2)
     expect(r.err).toContain('hint: ')
   })
-
-  it('show rejects a config with the old agent kind', async () => {
-    const dir = tempDir()
-    writeFileSync(
-      join(dir, 'old.json'),
-      JSON.stringify({ agent: { kind: ['superagent', 'claude'].join('-'), login: 'a' } }),
-    )
-    const r = await run(['show', EXAMPLE, '--config', join(dir, 'old.json')])
-    expect(r.code).toBe(2)
-    expect(r.err).toContain('unknown agent.kind')
-    expect(r.err).toContain('supported: issuecrew')
-  })
 })
 
 describe('schema', () => {

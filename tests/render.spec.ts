@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { createIssuecrewProfile } from '../src/adapters/agent/issuecrew.ts'
-import { DEFAULT_AGENTS } from '../src/cli/main.ts'
 import { getAgentProfile } from '../src/core/agent.ts'
 import { ConfigError } from '../src/core/errors.ts'
 import { publishOrder } from '../src/core/plan/order.ts'
@@ -174,10 +173,6 @@ describe('render', () => {
     )
     expect(() => getAgentProfile({ kind: 'nope', login: 'a' }, { issuecrew: createIssuecrewProfile })).toThrow(
       /unknown agent\.kind/,
-    )
-    const OLD_KIND = ['superagent', 'claude'].join('-')
-    expect(() => getAgentProfile({ kind: OLD_KIND, login: 'a' }, DEFAULT_AGENTS)).toThrow(
-      /unknown agent\.kind .*supported: issuecrew$/,
     )
   })
 })

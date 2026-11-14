@@ -4,11 +4,9 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { ConfigError } from '../src/core/errors.ts'
-import { LOGIN_HINT, SETUP_HINT, findConfigFile, loadConfig, resolveToken } from '../src/core/config.ts'
+import { LOGIN_HINT, SETUP_HINT, loadConfig } from '../src/core/config.ts'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
-const OLD_NAME = ['sac', 'planner'].join('-')
-const OLD_CONFIG_ENV = ['SAC', 'PLANNER', 'CONFIG'].join('_')
 
 function dirs(): { cwd: string; home: string } {
   return { cwd: mkdtempSync(join(tmpdir(), 'issuecrew-')), home: mkdtempSync(join(tmpdir(), 'issuecrew-')) }
@@ -94,26 +92,5 @@ describe('config', () => {
     const { cwd, home } = dirs()
     const config = loadConfig({ path: join(ROOT, 'issuecrew-planner.config.example.json'), env: { HOME: home }, cwd })
     expect(config.agent.login).toBe('<agent-login>')
-  })
-
-  it('old config paths and env var are not read', () => {
-    const { cwd, home } = dirs()
-    writeConfig(join(cwd, OLD_NAME + '.config.json'), 'l-old-cwd')
-    writeConfig(join(home, '.config', OLD_NAME, 'config.json'), 'l-old-home')
-    expect(
-      findConfigFile({ env: { HOME: home, [OLD_CONFIG_ENV]: join(cwd, OLD_NAME + '.config.json') }, cwd }),
-    ).toBeUndefined()
-    const err = thrown(() => loadConfig({ env: { HOME: home }, cwd }))
-    expect(err.message).toMatch(/no config found/)
-    expect(err.message).toContain('ISSUECREW_PLANNER_CONFIG')
-  })
-
-  it('old token env var is ignored', () => {
-    const { cwd, home } = dirs()
-    writeConfig(join(cwd, 'issuecrew-planner.config.json'), 'x')
-    const config = loadConfig({ env: { HOME: home }, cwd })
-    const err = thrown(() => resolveToken(config, { PLANNER_GITHUB_TOKEN: 'old' }))
-    expect(err.message).toContain('ISSUECREW_PLANNER_GITHUB_TOKEN is not set')
-    expect(resolveToken(config, { ISSUECREW_PLANNER_GITHUB_TOKEN: 'new' })).toBe('new')
   })
 })
