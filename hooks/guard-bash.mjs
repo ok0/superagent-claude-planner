@@ -41,6 +41,72 @@ function segmentsOf(command) {
     .filter(s => s.length > 0)
 }
 
+function startsSubstitution(command, i) {
+  const c = command[i]
+  if (c === '`') return true
+  if (c !== '$') return false
+  const next = command[i + 1]
+  return next === '(' || (next === '{' && /^[ \t\n|]$/.test(command[i + 2] ?? ''))
+}
+
+// Splits on unquoted, unescaped operators. Returns [{ text, bare }] where bare has every quoted or escaped
+// character (and the quote/backslash characters) replaced by '_', or null when the naive fallback must be used.
+function lexSegments(command) {
+  let state = 'U'
+  let bare = ''
+  const cuts = []
+  let i = 0
+  while (i < command.length) {
+    const c = command[i]
+    if (state === 'S') {
+      bare += '_'
+      if (c === "'") state = 'U'
+      i++
+      continue
+    }
+    if (startsSubstitution(command, i)) return null
+    if (c === '\\') {
+      if (startsSubstitution(command, i + 1)) return null
+      const len = Math.min(2, command.length - i)
+      bare += '_'.repeat(len)
+      i += len
+      continue
+    }
+    if (state === 'D') {
+      bare += '_'
+      if (c === '"') state = 'U'
+      i++
+      continue
+    }
+    if (c === "'" || c === '"') {
+      state = c === "'" ? 'S' : 'D'
+      bare += '_'
+      i++
+      continue
+    }
+    const two = command.slice(i, i + 2)
+    if (two === "$'" || two === '<<' || c === '#') return null
+    if (two === '||' || two === '&&') {
+      cuts.push([i, i + 2])
+      bare += two
+      i += 2
+      continue
+    }
+    if (';|&\n()'.includes(c)) cuts.push([i, i + 1])
+    bare += c
+    i++
+  }
+  if (state !== 'U') return null
+  const segments = []
+  let start = 0
+  for (const [from, to] of [...cuts, [command.length, command.length]]) {
+    const text = command.slice(start, from).trim()
+    if (text.length > 0) segments.push({ text, bare: command.length === bare.length ? bare.slice(start, from) : text })
+    start = to
+  }
+  return segments
+}
+
 function commandTokens(segment) {
   const tokens = segment
     .split(/\s+/)
@@ -72,7 +138,7 @@ function stripSaveHeredoc(command) {
 
 function alwaysDeny(command, segments, names) {
   for (const seg of segments) {
-    if (commandWord(seg) === 'gh') {
+    if (commandWord(seg.text) === 'gh') {
       return 'GitHub CLI is not allowed; issues are created only by issuecrew-planner publish after approval'
     }
   }
@@ -109,10 +175,10 @@ function gitAllowed(tokens) {
   return GIT_READ.has(rest[0])
 }
 
-function segmentAllowed(segment) {
-  const cleaned = segment.replace(/\d?>&\d/g, '').replace(/\d?>\s*\/dev\/null/g, '')
+function segmentAllowed(seg) {
+  const cleaned = seg.bare.replace(/\d?>&\d/g, '').replace(/\d?>\s*\/dev\/null/g, '')
   if (cleaned.includes('>')) return false
-  const tokens = commandTokens(segment)
+  const tokens = commandTokens(seg.text)
   if (tokens.length === 0) return false
   const word = basename(tokens[0])
   if (word === 'issuecrew-planner') {
@@ -135,15 +201,17 @@ function decide(input) {
   if (typeof command !== 'string') return null
   const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd()
   const checked = stripSaveHeredoc(command)
-  const segments = segmentsOf(checked)
+  const lexed = lexSegments(checked)
+  const segments = lexed ?? segmentsOf(checked).map(text => ({ text, bare: text }))
+  const substitution = lexed === null && (checked.includes('$(') || checked.includes('`'))
   const denied = alwaysDeny(command, segments, tokenNames(projectDir))
   if (denied !== null) return denied
   if (!sessionActive(join(projectDir, '.issuecrew-planner', '.session-active'))) return null
-  if (checked.includes('$(') || checked.includes('`')) {
+  if (substitution) {
     return `command substitution is not allowed ${SESSION_SUFFIX}`
   }
   for (const seg of segments) {
-    if (!segmentAllowed(seg)) return `${commandWord(seg)} is not allowed ${SESSION_SUFFIX}`
+    if (!segmentAllowed(seg)) return `${commandWord(seg.text)} is not allowed ${SESSION_SUFFIX}`
   }
   return null
 }

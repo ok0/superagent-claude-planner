@@ -18,7 +18,7 @@ afterAll(() => {
   for (const dir of created) rmSync(dir, { recursive: true, force: true })
 })
 
-function guard(command: string, marker: string | null, opts?: { config?: object; tool?: string }): 'allow' | 'deny' {
+function runHook(command: string, marker: string | null, opts?: { config?: object; tool?: string }): string {
   const dir = mkdtempSync(join(tmpdir(), 'issuecrew-guard-'))
   created.push(dir)
   if (marker !== null) {
@@ -39,9 +39,20 @@ function guard(command: string, marker: string | null, opts?: { config?: object;
     encoding: 'utf8',
   })
   expect(result.status).toBe(0)
-  if (result.stdout === '') return 'allow'
-  const parsed = JSON.parse(result.stdout)
+  return result.stdout
+}
+
+function guard(command: string, marker: string | null, opts?: { config?: object; tool?: string }): 'allow' | 'deny' {
+  const stdout = runHook(command, marker, opts)
+  if (stdout === '') return 'allow'
+  const parsed = JSON.parse(stdout)
   return parsed.hookSpecificOutput.permissionDecision === 'deny' ? 'deny' : 'allow'
+}
+
+function denyReason(command: string, marker: string | null): string | null {
+  const stdout = runHook(command, marker)
+  if (stdout === '') return null
+  return JSON.parse(stdout).hookSpecificOutput.permissionDecisionReason as string
 }
 
 describe('guard-bash hook', () => {
@@ -148,5 +159,65 @@ describe('guard-bash hook', () => {
   it('still denies date and compound commands while active', () => {
     expect(guard('date -u +%Y-%m-%dT%H:%M:%SZ', FRESH)).toBe('deny')
     expect(guard('issuecrew-planner catalog; echo "exit=$?"', FRESH)).toBe('deny')
+  })
+
+  it('allows quoted and escaped metacharacters in read-only commands while active', () => {
+    const commands = [
+      'grep -rn "fooId\\|barId" src',
+      "grep -rn 'a\\|b' src",
+      'grep -rn fooId\\ src',
+      'rg "x;y" .',
+      'grep -n "a>b" f',
+      'grep "(x)" f',
+      'grep -rn "a&&b" src',
+      'grep "a\\"; rm -rf y\\"" f',
+      "grep -rn 'fooId$(barId)' src",
+      "grep 'a`b`' f",
+    ]
+    for (const command of commands) {
+      expect(guard(command, FRESH), command).toBe('allow')
+    }
+  })
+
+  it('denies real operators, redirection and substitution while active', () => {
+    const commands = [
+      'grep x src; rm -rf y',
+      'grep x src | gh issue create',
+      'cat f > out',
+      'grep "x" f > out',
+      'grep "a\\\\" ; rm -rf y',
+      'grep "$(id)" f',
+      'grep "`id`" f',
+      'grep \\$(id) f',
+      'grep "${ rm -rf y; }" f',
+      'grep "x; rm y',
+      "grep -rn fooId # it's\nrm -rf y\n'",
+      "cat <<E\ncat '\nE\nrm -rf y\n'",
+      "grep $'\\'' ; rm -rf y ; $'\\'' f",
+    ]
+    for (const command of commands) {
+      expect(guard(command, FRESH), command).toBe('deny')
+    }
+  })
+
+  it('denies GitHub write paths with and without the marker', () => {
+    const commands = [
+      'grep x src | gh issue create',
+      'grep "$(gh issue create)" f',
+      'grep "$(echo \')\' ; gh issue create)" f',
+      'grep -rn ISSUECREW_PLANNER_GITHUB_TOKEN src',
+      "curl -s 'https://api.github.com/repos/example-org/one/issues'",
+    ]
+    for (const marker of [FRESH, null]) {
+      for (const command of commands) {
+        expect(guard(command, marker), command).toBe('deny')
+      }
+    }
+  })
+
+  it('names the disallowed command in the deny reason', () => {
+    expect(denyReason('grep -rn "fooId\\|barId" src; rm -rf y', FRESH)).toContain('rm is not allowed')
+    expect(denyReason('grep "x; rm y', FRESH)).toContain('rm is not allowed')
+    expect(denyReason('grep -rn "fooId\\|barId" src', FRESH)).toBeNull()
   })
 })
