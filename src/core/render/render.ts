@@ -12,8 +12,8 @@ export const AT_ONCE_SENTENCE =
   'Temporary breakage risk: the old form is replaced in this same set; merge in the order above, until all are merged the system may be broken.'
 export const STAGED_SENTENCE =
   'Staged change: the producer keeps the old form. Removing the old form is not part of this changeset and will be a separate later request.'
-export const CONTRACT_BEGIN = '<!-- sac-planner:contract:begin -->'
-export const CONTRACT_END = '<!-- sac-planner:contract:end -->'
+export const CONTRACT_BEGIN = '<!-- issuecrew-planner:contract:begin -->'
+export const CONTRACT_END = '<!-- issuecrew-planner:contract:end -->'
 
 const LANG: Record<(typeof CONTRACT_FORMATS)[number], string> = {
   openapi: 'yaml',
@@ -24,7 +24,7 @@ const LANG: Record<(typeof CONTRACT_FORMATS)[number], string> = {
 }
 
 export function issueMarker(changesetId: string, repo: string): string {
-  return `<!-- sac-planner:${changesetId}:${repo} -->`
+  return `<!-- issuecrew-planner:${changesetId}:${repo} -->`
 }
 
 function fence(content: string): string {

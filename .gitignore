@@ -4,12 +4,12 @@
 node_modules/
 /lib/
 coverage/
-.sac-planner/
+.issuecrew-planner/
 *.log
 .DS_Store
 /.forbidden-names
-/sac-planner.config.json
-/superagent-claude.json
+/issuecrew-planner.config.json
+/issuecrew.json
 .env*
 .npmrc
 *.pem

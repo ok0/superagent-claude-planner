@@ -16,7 +16,7 @@ const SENTINEL = 'sentinel-token-7f3a9c'
 const created: string[] = []
 
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-'))
   created.push(dir)
   return dir
 }
@@ -33,9 +33,9 @@ function setup(): Ctx {
   const plan = samplePlan()
   writeFileSync(join(dir, 'plan.json'), JSON.stringify(plan, null, 2))
   writeFileSync(
-    join(dir, 'sac-planner.config.json'),
+    join(dir, 'issuecrew-planner.config.json'),
     JSON.stringify(
-      { agent: { kind: 'superagent-claude', login: 'agent-bot' }, github: { tokenEnv: 'TEST_PLANNER_TOKEN' } },
+      { agent: { kind: 'issuecrew', login: 'agent-bot' }, github: { tokenEnv: 'TEST_PLANNER_TOKEN' } },
       null,
       2,
     ),
@@ -190,7 +190,7 @@ describe('publish dry run', () => {
     expect(r.code).toBe(0)
     expect(r.out).toContain('=== Issue 1/3')
     expect(r.out).toContain('dry run: no issues created')
-    expect(readdirSync(ctx.dir).sort()).toEqual(['plan.json', 'sac-planner.config.json'])
+    expect(readdirSync(ctx.dir).sort()).toEqual(['issuecrew-planner.config.json', 'plan.json'])
   })
 
   it('--dry-run combined with --approve-hash exits 2', async () => {

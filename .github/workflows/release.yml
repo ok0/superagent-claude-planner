@@ -46,7 +46,7 @@ jobs:
       - name: check published
         id: published
         run: |
-          if npm view "superagent-claude-planner@${RELEASE_TAG#v}" version > /dev/null 2>&1; then
+          if npm view "issuecrew-planner@${RELEASE_TAG#v}" version > /dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"

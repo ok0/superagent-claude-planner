@@ -3,12 +3,12 @@ import { basename, join, resolve } from 'node:path'
 
 const WRAPPERS = new Set(['sudo', 'env', 'command', 'exec', 'nohup', 'time', 'xargs'])
 const READ_ONLY = new Set(['ls', 'cat', 'head', 'tail', 'wc', 'rg', 'grep', 'pwd'])
-const SAC_SUBCOMMANDS = new Set(['validate', 'show', 'state', 'schema', 'catalog', '--help', '-h'])
+const PLANNER_SUBCOMMANDS = new Set(['validate', 'show', 'state', 'schema', 'catalog', '--help', '-h'])
 const FIND_FORBIDDEN = ['-delete', '-exec', '-execdir', '-ok', '-okdir', '-fprint', '-fprintf', '-fls']
 const GIT_READ = new Set(['log', 'show', 'ls-files', 'grep', 'status', 'diff', 'rev-parse'])
 const SESSION_MAX_AGE_MS = 4 * 3600 * 1000
 const SESSION_SUFFIX =
-  'while the plan session is active (.sac-planner/.session-active); finish or abort the session to lift this'
+  'while the plan session is active (.issuecrew-planner/.session-active); finish or abort the session to lift this'
 
 function readJson(path) {
   try {
@@ -19,11 +19,11 @@ function readJson(path) {
 }
 
 function tokenNames(projectDir) {
-  const names = ['PLANNER_GITHUB_TOKEN']
+  const names = ['ISSUECREW_PLANNER_GITHUB_TOKEN']
   const candidates = []
-  if (process.env.SAC_PLANNER_CONFIG) candidates.push(resolve(projectDir, process.env.SAC_PLANNER_CONFIG))
-  candidates.push(join(projectDir, 'sac-planner.config.json'))
-  if (process.env.HOME) candidates.push(join(process.env.HOME, '.config', 'sac-planner', 'config.json'))
+  if (process.env.ISSUECREW_PLANNER_CONFIG) candidates.push(resolve(projectDir, process.env.ISSUECREW_PLANNER_CONFIG))
+  candidates.push(join(projectDir, 'issuecrew-planner.config.json'))
+  if (process.env.HOME) candidates.push(join(process.env.HOME, '.config', 'issuecrew-planner', 'config.json'))
   for (const path of candidates) {
     const data = readJson(path)
     if (data === undefined) continue
@@ -62,7 +62,7 @@ function stripSaveHeredoc(command) {
   if (!m) return command
   const head = m[1]
   const tokens = commandTokens(head)
-  if (basename(tokens[0] ?? '') !== 'sac-planner' || tokens[1] !== 'save') return command
+  if (basename(tokens[0] ?? '') !== 'issuecrew-planner' || tokens[1] !== 'save') return command
   if (/[;|&<>()`]/.test(head)) return command
   const end = lines.findIndex((l, i) => i > 0 && l === m[2])
   if (end < 0) return command
@@ -73,7 +73,7 @@ function stripSaveHeredoc(command) {
 function alwaysDeny(command, segments, names) {
   for (const seg of segments) {
     if (commandWord(seg) === 'gh') {
-      return 'GitHub CLI is not allowed; issues are created only by sac-planner publish after approval'
+      return 'GitHub CLI is not allowed; issues are created only by issuecrew-planner publish after approval'
     }
   }
   if (/\b(curl|wget)\b/.test(command) && /(api|uploads)\.github\.com/i.test(command)) {
@@ -115,9 +115,9 @@ function segmentAllowed(segment) {
   const tokens = commandTokens(segment)
   if (tokens.length === 0) return false
   const word = basename(tokens[0])
-  if (word === 'sac-planner') {
+  if (word === 'issuecrew-planner') {
     return (
-      SAC_SUBCOMMANDS.has(tokens[1]) ||
+      PLANNER_SUBCOMMANDS.has(tokens[1]) ||
       tokens[1] === 'save' ||
       (tokens[1] === 'session' && (tokens[2] === 'start' || tokens[2] === 'end')) ||
       (tokens[1] === 'publish' && tokens.includes('--approve-hash'))
@@ -138,7 +138,7 @@ function decide(input) {
   const segments = segmentsOf(checked)
   const denied = alwaysDeny(command, segments, tokenNames(projectDir))
   if (denied !== null) return denied
-  if (!sessionActive(join(projectDir, '.sac-planner', '.session-active'))) return null
+  if (!sessionActive(join(projectDir, '.issuecrew-planner', '.session-active'))) return null
   if (checked.includes('$(') || checked.includes('`')) {
     return `command substitution is not allowed ${SESSION_SUFFIX}`
   }
@@ -165,7 +165,7 @@ if (reason !== null) {
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
-        permissionDecisionReason: 'sac-planner guard: ' + reason,
+        permissionDecisionReason: 'issuecrew-planner guard: ' + reason,
       },
     }) + '\n',
   )

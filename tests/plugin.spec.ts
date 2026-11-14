@@ -48,19 +48,21 @@ function allowedToolEntries(fm: string): string[] {
 }
 
 describe('plugin packaging', () => {
-  it('plugin manifest is named superagent-claude-planner', () => {
+  it('plugin manifest is named issuecrew-planner', () => {
     const plugin = JSON.parse(readText('.claude-plugin/plugin.json'))
-    expect(plugin.name).toBe('superagent-claude-planner')
+    expect(plugin.name).toBe('issuecrew-planner')
     expect(plugin.version).toBe(JSON.parse(readText('package.json')).version)
     const marketplace = JSON.parse(readText('.claude-plugin/marketplace.json'))
-    expect(marketplace.plugins[0].name).toBe('superagent-claude-planner')
+    expect(marketplace.name).toBe('issuecrew-planner')
+    expect(marketplace.plugins[0].name).toBe('issuecrew-planner')
     expect(marketplace.plugins[0].source).toBe('./')
+    expect(marketplace.plugins[0].version).toBe(JSON.parse(readText('package.json')).version)
   })
 
   it('launcher is executable', () => {
-    const mode = statSync(join(ROOT, 'bin', 'sac-planner')).mode
+    const mode = statSync(join(ROOT, 'bin', 'issuecrew-planner')).mode
     expect(mode & 0o111).not.toBe(0)
-    expect(readText('bin/sac-planner')).toContain('lib/cli.js')
+    expect(readText('bin/issuecrew-planner')).toContain('lib/cli.js')
   })
 
   it('skill is user-invoked only', () => {
@@ -76,21 +78,21 @@ describe('plugin packaging', () => {
       'Read',
       'Grep',
       'Glob',
-      'Write(./.sac-planner/draft.json)',
-      'Bash(sac-planner session *)',
-      'Bash(sac-planner save *)',
-      'Bash(sac-planner validate *)',
-      'Bash(sac-planner show *)',
-      'Bash(sac-planner state *)',
-      'Bash(sac-planner schema*)',
-      'Bash(sac-planner catalog*)',
-      'Bash(sac-planner publish * --approve-hash *)',
+      'Write(./.issuecrew-planner/draft.json)',
+      'Bash(issuecrew-planner session *)',
+      'Bash(issuecrew-planner save *)',
+      'Bash(issuecrew-planner validate *)',
+      'Bash(issuecrew-planner show *)',
+      'Bash(issuecrew-planner state *)',
+      'Bash(issuecrew-planner schema*)',
+      'Bash(issuecrew-planner catalog*)',
+      'Bash(issuecrew-planner publish * --approve-hash *)',
       'Bash(git clone --depth 1 *)',
     ])
     for (const entry of entries) {
       expect(entry).not.toMatch(/\bgh\b|curl|wget|git push/)
     }
-    expect(entries).toContain('Write(./.sac-planner/draft.json)')
+    expect(entries).toContain('Write(./.issuecrew-planner/draft.json)')
     const publishEntries = entries.filter(e => e.includes('publish'))
     expect(publishEntries).toHaveLength(1)
     expect(publishEntries[0]).toContain('--approve-hash')
@@ -107,16 +109,16 @@ describe('plugin packaging', () => {
   it('skill body covers the approval flow', () => {
     const text = body(readText('skills/plan/SKILL.md'))
     const required = [
-      '.sac-planner/.session-active',
-      'sac-planner session start',
-      'sac-planner session end',
-      'sac-planner save --file',
-      '.sac-planner/draft.json',
+      '.issuecrew-planner/.session-active',
+      'issuecrew-planner session start',
+      'issuecrew-planner session end',
+      'issuecrew-planner save --file',
+      '.issuecrew-planner/draft.json',
       'one command per Bash call',
       'done',
-      'sac-planner catalog',
-      'sac-planner validate',
-      'sac-planner show',
+      'issuecrew-planner catalog',
+      'issuecrew-planner validate',
+      'issuecrew-planner show',
       '--approve-hash',
       '(A) staged',
       '(B) at-once',
@@ -130,7 +132,7 @@ describe('plugin packaging', () => {
       expect(text).toContain(needle)
     }
     expect(text).not.toContain('Use the Write tool')
-    expect(text).not.toContain('SAC_PLAN_EOF')
+    expect(text).not.toContain('ISSUECREW_PLAN_EOF')
     expect(text).not.toContain('gh issue')
     expect(text).not.toContain('api.github.com')
   })
@@ -138,7 +140,7 @@ describe('plugin packaging', () => {
   it('skill confirms the repositories before it saves a plan', () => {
     const text = body(readText('skills/plan/SKILL.md'))
     const confirm = text.indexOf('Ask the user to confirm or correct the list, roles, and slugs')
-    const save = text.indexOf('sac-planner save --file')
+    const save = text.indexOf('issuecrew-planner save --file')
     const approve = text.indexOf('--approve-hash')
     expect(confirm).toBeGreaterThan(-1)
     expect(confirm).toBeLessThan(save)
@@ -157,11 +159,11 @@ describe('launcher fallback', () => {
   })
 
   function plugin(withLib: boolean): string {
-    const d = mkdtempSync(join(tmpdir(), 'sac-launcher-'))
+    const d = mkdtempSync(join(tmpdir(), 'issuecrew-launcher-'))
     temps.push(d)
     mkdirSync(join(d, 'bin'))
-    copyFileSync(join(ROOT, 'bin', 'sac-planner'), join(d, 'bin', 'sac-planner'))
-    chmodSync(join(d, 'bin', 'sac-planner'), 0o755)
+    copyFileSync(join(ROOT, 'bin', 'issuecrew-planner'), join(d, 'bin', 'issuecrew-planner'))
+    chmodSync(join(d, 'bin', 'issuecrew-planner'), 0o755)
     if (withLib) {
       mkdirSync(join(d, 'lib'))
       writeFileSync(join(d, 'lib', 'cli.js'), "console.log('local ' + process.argv.slice(2).join(' '))\n")
@@ -170,16 +172,16 @@ describe('launcher fallback', () => {
   }
 
   function fakeGlobal(): string {
-    const g = mkdtempSync(join(tmpdir(), 'sac-global-'))
+    const g = mkdtempSync(join(tmpdir(), 'issuecrew-global-'))
     temps.push(g)
-    const bin = join(g, 'sac-planner')
+    const bin = join(g, 'issuecrew-planner')
     writeFileSync(bin, '#!/bin/sh\necho "global $*"\n')
     chmodSync(bin, 0o755)
     return g
   }
 
   function launch(dir: string, path: string) {
-    return spawnSync(join(dir, 'bin', 'sac-planner'), ['--help'], {
+    return spawnSync(join(dir, 'bin', 'issuecrew-planner'), ['--help'], {
       encoding: 'utf8',
       timeout: 5000,
       env: { PATH: path, HOME: tmpdir() },
@@ -194,7 +196,7 @@ describe('launcher fallback', () => {
     expect(r.stdout.trim()).toBe('local --help')
   })
 
-  it('falls back to another sac-planner on PATH when lib/ is missing', () => {
+  it('falls back to another issuecrew-planner on PATH when lib/ is missing', () => {
     const d = plugin(false)
     const g = fakeGlobal()
     const r = launch(d, `${d}/bin:${g}:${SYS}`)
@@ -206,7 +208,7 @@ describe('launcher fallback', () => {
     const d = plugin(false)
     const r = launch(d, `${d}/bin:${SYS}`)
     expect(r.status).toBe(2)
-    expect(r.stderr).toContain('npm i -g superagent-claude-planner')
+    expect(r.stderr).toContain('npm i -g issuecrew-planner')
     expect(r.stderr).toContain('docs/setup.md')
   })
 
@@ -215,6 +217,6 @@ describe('launcher fallback', () => {
     const b = plugin(false)
     const r = launch(a, `${a}/bin:${b}/bin:${SYS}`)
     expect(r.status).toBe(2)
-    expect(r.stderr).toContain('npm i -g superagent-claude-planner')
+    expect(r.stderr).toContain('npm i -g issuecrew-planner')
   })
 })

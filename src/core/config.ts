@@ -4,10 +4,10 @@ import { dirname, join, resolve } from 'node:path'
 import { z } from 'zod'
 import { ConfigError } from './errors.ts'
 
-export const DEFAULT_TOKEN_ENV = 'PLANNER_GITHUB_TOKEN'
+export const DEFAULT_TOKEN_ENV = 'ISSUECREW_PLANNER_GITHUB_TOKEN'
 
 export const ConfigSchema = z.object({
-  agent: z.object({ kind: z.string().min(1).default('superagent-claude'), login: z.string().min(1) }),
+  agent: z.object({ kind: z.string().min(1).default('issuecrew'), login: z.string().min(1) }),
   github: z
     .object({
       tokenEnv: z
@@ -23,7 +23,7 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>
 
 export const SETUP_HINT =
-  'create ./sac-planner.config.json (or ~/.config/sac-planner/config.json) and set agent.login to the GitHub login of the agent account; see docs/setup.md (Config file) in the superagent-claude-planner repository'
+  'create ./issuecrew-planner.config.json (or ~/.config/issuecrew-planner/config.json) and set agent.login to the GitHub login of the agent account; see docs/setup.md (Config file) in the issuecrew-planner repository'
 export const LOGIN_HINT =
   'set agent.login in the config to the GitHub login of the agent account to mention in issues; there is no default; see docs/setup.md'
 export const TOKEN_HINT =
@@ -34,13 +34,13 @@ export function findConfigFile(opts: {
   env: Readonly<Record<string, string | undefined>>
   cwd: string
 }): string | undefined {
-  const cwdFile = resolve(opts.cwd, 'sac-planner.config.json')
-  const homeFile = join(opts.env.HOME ?? homedir(), '.config', 'sac-planner', 'config.json')
+  const cwdFile = resolve(opts.cwd, 'issuecrew-planner.config.json')
+  const homeFile = join(opts.env.HOME ?? homedir(), '.config', 'issuecrew-planner', 'config.json')
   if (opts.path) {
     return resolve(opts.cwd, opts.path)
   }
-  if (opts.env.SAC_PLANNER_CONFIG) {
-    return resolve(opts.cwd, opts.env.SAC_PLANNER_CONFIG)
+  if (opts.env.ISSUECREW_PLANNER_CONFIG) {
+    return resolve(opts.cwd, opts.env.ISSUECREW_PLANNER_CONFIG)
   }
   return [cwdFile, homeFile].find(f => existsSync(f))
 }
@@ -53,7 +53,7 @@ export function loadConfig(opts: {
   const file = findConfigFile(opts)
   if (file === undefined) {
     throw new ConfigError(
-      'no config found; looked for --config, $SAC_PLANNER_CONFIG, ./sac-planner.config.json, ~/.config/sac-planner/config.json',
+      'no config found; looked for --config, $ISSUECREW_PLANNER_CONFIG, ./issuecrew-planner.config.json, ~/.config/issuecrew-planner/config.json',
       SETUP_HINT,
     )
   }

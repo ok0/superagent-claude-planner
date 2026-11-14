@@ -1,6 +1,6 @@
-# Contributing to superagent-claude-planner
+# Contributing to issuecrew-planner
 
-Thanks for helping improve superagent-claude-planner. This guide covers setup, the checks, commit rules, and how releases work.
+Thanks for helping improve issuecrew-planner. This guide covers setup, the checks, commit rules, and how releases work.
 
 ## Development setup
 
@@ -8,8 +8,8 @@ Thanks for helping improve superagent-claude-planner. This guide covers setup, t
 - pnpm 11. The exact version is the `packageManager` field in `package.json`, for example `npm install --global pnpm@11.28.11`.
 
 ```sh
-git clone https://github.com/<owner>/superagent-claude-planner.git
-cd superagent-claude-planner
+git clone https://github.com/<owner>/issuecrew-planner.git
+cd issuecrew-planner
 pnpm install --frozen-lockfile
 pnpm build
 ```
@@ -30,7 +30,7 @@ Run `pnpm format` to format the TypeScript sources with Prettier. `pnpm format:c
 
 ### Forbidden names
 
-The hygiene check (`pnpm hygiene`, part of `pnpm check`) and the pack check scan the repository for names that must never appear in it, such as personal accounts, organizations, or practice repositories. The list is never committed. Put one name per line in a local `.forbidden-names` file at the repository root (it is gitignored; lines starting with `#` are comments), or set `SAC_PLANNER_FORBIDDEN_NAMES` to a comma-separated list. Without either, the name scan is skipped with a notice.
+The hygiene check (`pnpm hygiene`, part of `pnpm check`) and the pack check scan the repository for names that must never appear in it, such as personal accounts, organizations, or practice repositories. The list is never committed. Put one name per line in a local `.forbidden-names` file at the repository root (it is gitignored; lines starting with `#` are comments), or set `ISSUECREW_PLANNER_FORBIDDEN_NAMES` to a comma-separated list. Without either, the name scan is skipped with a notice. The committed `.hygiene-allow` file lists exact substrings that the scan exempts, one per line, such as this project's own repository URLs; an entry matches only when it is not followed by a letter, digit, `-` or `_`.
 
 ## Commit messages
 

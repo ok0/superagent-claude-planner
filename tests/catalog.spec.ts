@@ -11,7 +11,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const created: string[] = []
 
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-catalog-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-catalog-'))
   created.push(dir)
   return dir
 }
@@ -61,7 +61,7 @@ describe('catalog', () => {
 
   it('catalog command with a config without catalog prints no catalog configured', async () => {
     const dir = tempDir()
-    writeFile(dir, 'sac-planner.config.json', JSON.stringify({ agent: { login: '<agent-login>' } }))
+    writeFile(dir, 'issuecrew-planner.config.json', JSON.stringify({ agent: { login: '<agent-login>' } }))
     const r = await run(['catalog'], { cwd: dir, env: { HOME: tempDir() } })
     expect(r.code).toBe(0)
     expect(r.out).toBe('no catalog configured\n')
@@ -70,7 +70,7 @@ describe('catalog', () => {
 
   it('valid catalog prints its repos', async () => {
     const dir = tempDir()
-    writeFile(dir, 'sac-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
+    writeFile(dir, 'issuecrew-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
     writeFile(
       dir,
       'cat.json',
@@ -97,7 +97,7 @@ describe('catalog', () => {
 
   it('catalog --json prints the catalog with absolute localPath', async () => {
     const dir = tempDir()
-    writeFile(dir, 'sac-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
+    writeFile(dir, 'issuecrew-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
     writeFile(
       dir,
       'cat.json',
@@ -117,7 +117,7 @@ describe('catalog', () => {
 
   it('missing configured catalog fails naming the file', async () => {
     const dir = tempDir()
-    writeFile(dir, 'sac-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'nope.json' }))
+    writeFile(dir, 'issuecrew-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'nope.json' }))
     const r = await run(['catalog'], { cwd: dir, env: { HOME: tempDir() } })
     expect(r.code).toBe(2)
     expect(r.err).toContain(join(dir, 'nope.json'))
@@ -137,7 +137,7 @@ describe('catalog', () => {
     ]
     for (const text of cases) {
       const dir = tempDir()
-      writeFile(dir, 'sac-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
+      writeFile(dir, 'issuecrew-planner.config.json', JSON.stringify({ agent: { login: 'a' }, catalog: 'cat.json' }))
       writeFile(dir, 'cat.json', text)
       const r = await run(['catalog'], { cwd: dir, env: { HOME: tempDir() } })
       expect(r.code).toBe(2)

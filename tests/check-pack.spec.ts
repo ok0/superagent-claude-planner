@@ -12,13 +12,13 @@ afterAll(() => {
 })
 
 function emptyRoot(): string {
-  const root = mkdtempSync(join(tmpdir(), 'sacp-root-'))
+  const root = mkdtempSync(join(tmpdir(), 'issuecrew-root-'))
   made.push(root)
   return root
 }
 
 function makePack(entries: Record<string, string>): PackFn {
-  const base = mkdtempSync(join(tmpdir(), 'sacp-pk-'))
+  const base = mkdtempSync(join(tmpdir(), 'issuecrew-pk-'))
   made.push(base)
   const dir = join(base, 'package')
   for (const [rel, text] of Object.entries(entries)) {
@@ -40,7 +40,7 @@ function capture() {
   }
 }
 
-const env: Record<string, string | undefined> = { SAC_PLANNER_FORBIDDEN_NAMES: NAME }
+const env: Record<string, string | undefined> = { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME }
 
 const BASE: Record<string, string> = {
   'package.json': JSON.stringify({
@@ -75,9 +75,9 @@ describe('check-pack', () => {
     'src/core/index.ts',
     'fixtures/x/README.md',
     '.ensemble/plan.md',
-    '.sac-planner/x/plan.json',
-    'sac-planner.config.json',
-    'superagent-claude.json',
+    '.issuecrew-planner/x/plan.json',
+    'issuecrew-planner.config.json',
+    'issuecrew.json',
     '.forbidden-names',
     '.env.local',
     'lib/state.json',
@@ -89,7 +89,7 @@ describe('check-pack', () => {
   })
 
   it('example config is allowed', () => {
-    const { code } = run({ ...BASE, 'sac-planner.config.example.json': '{}\n' })
+    const { code } = run({ ...BASE, 'issuecrew-planner.config.example.json': '{}\n' })
     expect(code).toBe(0)
   })
 
@@ -110,10 +110,10 @@ describe('check-pack', () => {
     const token = 'sentinel-token-123456'
     const { code, io } = run(
       { ...BASE, 'lib/index.js': 'const t = "sentinel-token-123456"\n' },
-      { SAC_PLANNER_FORBIDDEN_NAMES: NAME, PLANNER_GITHUB_TOKEN: token },
+      { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME, ISSUECREW_PLANNER_GITHUB_TOKEN: token },
     )
     expect(code).toBe(1)
-    expect(io.errText()).toContain('lib/index.js: value of $PLANNER_GITHUB_TOKEN')
+    expect(io.errText()).toContain('lib/index.js: value of $ISSUECREW_PLANNER_GITHUB_TOKEN')
     expect(io.outText()).not.toContain(token)
     expect(io.errText()).not.toContain(token)
   })

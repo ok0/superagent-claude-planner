@@ -19,7 +19,7 @@ afterAll(() => {
 })
 
 function setup(): { dir: string; planPath: string; plan: Plan } {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-'))
   created.push(dir)
   const plan = samplePlan()
   const planPath = join(dir, 'plan.json')

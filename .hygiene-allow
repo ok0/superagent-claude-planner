@@ -1,0 +1,3 @@
+# Exact substrings exempt from the forbidden-name scan (one per line, # comments).
+github.com/ok0/issuecrew-planner
+github.com/ok0/issuecrew

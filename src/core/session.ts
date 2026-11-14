@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
-export const SESSION_DIR = '.sac-planner'
+export const SESSION_DIR = '.issuecrew-planner'
 export const MARKER_FILE = '.session-active'
 export const DRAFT_FILE = 'draft.json'
 

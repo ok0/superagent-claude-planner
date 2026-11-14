@@ -9,7 +9,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const created: string[] = []
 
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-commits-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-commits-'))
   created.push(dir)
   return dir
 }

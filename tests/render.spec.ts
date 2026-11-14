@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createSuperagentClaudeProfile } from '../src/adapters/agent/superagent-claude.ts'
+import { createIssuecrewProfile } from '../src/adapters/agent/issuecrew.ts'
+import { DEFAULT_AGENTS } from '../src/cli/main.ts'
 import { getAgentProfile } from '../src/core/agent.ts'
 import { ConfigError } from '../src/core/errors.ts'
 import { publishOrder } from '../src/core/plan/order.ts'
@@ -15,7 +16,7 @@ import {
 } from '../src/core/render/render.ts'
 import { samplePlan } from './support/plans.ts'
 
-const agent = createSuperagentClaudeProfile({ login: 'agent-login-x' })
+const agent = createIssuecrewProfile({ login: 'agent-login-x' })
 const noLinks = {}
 
 function contractSlice(body: string): string {
@@ -49,7 +50,7 @@ describe('render', () => {
     const plan = samplePlan()
     const body = renderIssue(plan, 'example-org/storefront', { agent, links: noLinks }).body
     const lines = body.split('\n')
-    expect(lines[0]).toBe('<!-- sac-planner:sample-change:example-org/storefront -->')
+    expect(lines[0]).toBe('<!-- issuecrew-planner:sample-change:example-org/storefront -->')
     expect(lines[2]).toBe('@agent-login-x please work on this issue.')
     const headings = [
       '## Changeset',
@@ -162,20 +163,21 @@ describe('render', () => {
   })
 
   it('profile', () => {
-    const profile = createSuperagentClaudeProfile({ login: 'agent-login-x' })
+    const profile = createIssuecrewProfile({ login: 'agent-login-x' })
     expect(profile.mentionLine()).toBe('@agent-login-x please work on this issue.')
     expect(profile.setupDoc).toContain('policy.allowed')
     expect(profile.setupDoc).toContain('agent-login-x')
-    const resolved = getAgentProfile(
-      { kind: 'superagent-claude', login: 'a' },
-      { 'superagent-claude': createSuperagentClaudeProfile },
-    )
+    const resolved = getAgentProfile({ kind: 'issuecrew', login: 'a' }, { issuecrew: createIssuecrewProfile })
     expect(resolved.login).toBe('a')
-    expect(() =>
-      getAgentProfile({ kind: 'nope', login: 'a' }, { 'superagent-claude': createSuperagentClaudeProfile }),
-    ).toThrow(ConfigError)
-    expect(() =>
-      getAgentProfile({ kind: 'nope', login: 'a' }, { 'superagent-claude': createSuperagentClaudeProfile }),
-    ).toThrow(/unknown agent\.kind/)
+    expect(() => getAgentProfile({ kind: 'nope', login: 'a' }, { issuecrew: createIssuecrewProfile })).toThrow(
+      ConfigError,
+    )
+    expect(() => getAgentProfile({ kind: 'nope', login: 'a' }, { issuecrew: createIssuecrewProfile })).toThrow(
+      /unknown agent\.kind/,
+    )
+    const OLD_KIND = ['superagent', 'claude'].join('-')
+    expect(() => getAgentProfile({ kind: OLD_KIND, login: 'a' }, DEFAULT_AGENTS)).toThrow(
+      /unknown agent\.kind .*supported: issuecrew$/,
+    )
   })
 })

@@ -5,12 +5,12 @@ import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 export const STRIPPED_ENVS = [
-  'PLANNER_GITHUB_TOKEN',
+  'ISSUECREW_PLANNER_GITHUB_TOKEN',
   'GITHUB_TOKEN',
   'GH_TOKEN',
   'NPM_TOKEN',
   'NODE_AUTH_TOKEN',
-  'SAC_PLANNER_CONFIG',
+  'ISSUECREW_PLANNER_CONFIG',
 ]
 
 export function smokeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
@@ -20,10 +20,10 @@ export function smokeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 }
 
 export function runSmokePack(opts: { root: string; out: (s: string) => void; err: (s: string) => void }): number {
-  const tmp = mkdtempSync(join(tmpdir(), 'sacp-smoke-'))
+  const tmp = mkdtempSync(join(tmpdir(), 'issuecrew-smoke-'))
   const env = smokeEnv(process.env)
   const proj = join(tmp, 'proj')
-  const bin = join(proj, 'node_modules', '.bin', 'sac-planner')
+  const bin = join(proj, 'node_modules', '.bin', 'issuecrew-planner')
 
   const run = (cmd: string, args: string[], cwd: string): SpawnSyncReturns<string> =>
     spawnSync(cmd, args, { cwd, env, encoding: 'utf8' })
@@ -42,14 +42,17 @@ export function runSmokePack(opts: { root: string; out: (s: string) => void; err
     opts.out('smoke-pack: pack ok\n')
 
     mkdirSync(proj, { recursive: true })
-    writeFileSync(join(proj, 'package.json'), '{"name":"sacp-smoke","version":"0.0.0","private":true,"type":"module"}')
+    writeFileSync(
+      join(proj, 'package.json'),
+      '{"name":"issuecrew-smoke","version":"0.0.0","private":true,"type":"module"}',
+    )
     const install = run('npm', ['install', '--no-audit', '--no-fund', '--no-package-lock', tgz], proj)
     if (install.status !== 0) return fail('install', install.status, detailOf(install))
     opts.out('smoke-pack: install ok\n')
 
     const help = run(bin, ['--help'], proj)
     if (help.status !== 0) return fail('help', help.status, detailOf(help))
-    if (!help.stdout.includes('Usage: sac-planner')) return fail('help', help.status, 'usage text missing')
+    if (!help.stdout.includes('Usage: issuecrew-planner')) return fail('help', help.status, 'usage text missing')
     opts.out('smoke-pack: help ok\n')
 
     copyFileSync(join(opts.root, 'examples', 'plan.json'), join(proj, 'plan.json'))
@@ -59,12 +62,12 @@ export function runSmokePack(opts: { root: string; out: (s: string) => void; err
     opts.out('smoke-pack: validate ok\n')
 
     const importCode =
-      "const m = await import('superagent-claude-planner'); if (typeof m.validatePlan !== 'function') { console.error('validatePlan missing'); process.exit(1) }"
+      "const m = await import('issuecrew-planner'); if (typeof m.validatePlan !== 'function') { console.error('validatePlan missing'); process.exit(1) }"
     const imported = run(process.execPath, ['--input-type=module', '-e', importCode], proj)
     if (imported.status !== 0) return fail('import', imported.status, detailOf(imported))
     opts.out('smoke-pack: import ok\n')
 
-    const dts = join(proj, 'node_modules', 'superagent-claude-planner', 'lib', 'index.d.ts')
+    const dts = join(proj, 'node_modules', 'issuecrew-planner', 'lib', 'index.d.ts')
     if (!existsSync(dts) || !readFileSync(dts, 'utf8').includes('validatePlan')) {
       return fail('types', null, 'lib/index.d.ts missing or has no validatePlan')
     }

@@ -18,7 +18,7 @@ export type Approval = z.infer<typeof ApprovalSchema>
 export type ApprovalCheck = { ok: true; approval: Approval } | { ok: false; reason: 'missing' | 'changed' }
 
 export const APPROVE_HINT =
-  'run sac-planner show <plan>, review the issues, then approve the printed hash with sac-planner publish <plan> --approve-hash <hash> or sac-planner approve <plan> --hash <hash>'
+  'run issuecrew-planner show <plan>, review the issues, then approve the printed hash with issuecrew-planner publish <plan> --approve-hash <hash> or issuecrew-planner approve <plan> --hash <hash>'
 
 export function approvalPath(planPath: string): string {
   return join(dirname(resolve(planPath)), APPROVAL_FILE)

@@ -6,7 +6,7 @@ import { checkCoreImports, importSpecifiers } from '../scripts/check-hygiene.ts'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const SRC = join(ROOT, 'src')
-const EXAMPLE_CONFIG = join(ROOT, 'sac-planner.config.example.json')
+const EXAMPLE_CONFIG = join(ROOT, 'issuecrew-planner.config.example.json')
 
 function listFiles(dir: string, filter: (name: string) => boolean): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {

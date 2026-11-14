@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { createSuperagentClaudeProfile } from '../src/adapters/agent/superagent-claude.ts'
+import { createIssuecrewProfile } from '../src/adapters/agent/issuecrew.ts'
 import { recordApproval } from '../src/core/approval.ts'
 import { ApprovalError, GitHubError, IdentityError, PublishError, StateError } from '../src/core/errors.ts'
 import { planHash } from '../src/core/hash.ts'
@@ -24,12 +24,12 @@ afterAll(() => {
 })
 
 function setup() {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-'))
   created.push(dir)
   const plan = samplePlan()
   const planPath = join(dir, 'plan.json')
   writeFileSync(planPath, JSON.stringify(plan, null, 2) + '\n', 'utf8')
-  const agent = createSuperagentClaudeProfile({ login: 'agent-bot' })
+  const agent = createIssuecrewProfile({ login: 'agent-bot' })
   return { dir, planPath, plan, agent }
 }
 

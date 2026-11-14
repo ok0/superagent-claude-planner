@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { createSuperagentClaudeProfile } from '../src/adapters/agent/superagent-claude.ts'
+import { createIssuecrewProfile } from '../src/adapters/agent/issuecrew.ts'
 import { CATALOG_HINT } from '../src/core/catalog.ts'
 import { ConfigSchema, LOGIN_HINT, SETUP_HINT, TOKEN_HINT, resolveToken } from '../src/core/config.ts'
 import { ConfigError } from '../src/core/errors.ts'
@@ -18,7 +18,7 @@ describe('setup hints', () => {
 
   it('setup hint does not name a file missing from the npm package', () => {
     expect(SETUP_HINT).not.toContain('example')
-    expect(SETUP_HINT).toContain('~/.config/sac-planner/config.json')
+    expect(SETUP_HINT).toContain('~/.config/issuecrew-planner/config.json')
     expect(SETUP_HINT).toContain('docs/setup.md')
   })
 
@@ -35,7 +35,7 @@ describe('setup hints', () => {
   })
 
   it('identity setup doc references docs/setup.md', () => {
-    const { setupDoc } = createSuperagentClaudeProfile({ login: 'x' })
+    const { setupDoc } = createIssuecrewProfile({ login: 'x' })
     expect(setupDoc).toContain('docs/setup.md')
     expect(setupDoc).toContain('policy.allowed')
   })
@@ -46,7 +46,7 @@ describe('setup hints', () => {
 
   it('docs/setup.md states the agent start conditions', () => {
     const doc = readFileSync(join(ROOT, 'docs', 'setup.md'), 'utf8')
-    for (const term of ['policy.allowed', 'policy.acceptMode', '`auto`', '`repositories`', 'superagent-claude start']) {
+    for (const term of ['policy.allowed', 'policy.acceptMode', '`auto`', '`repositories`', 'issuecrew start']) {
       expect(doc).toContain(term)
     }
   })

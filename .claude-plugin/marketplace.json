@@ -1,12 +1,13 @@
 {
-  "name": "sac-planner-local",
+  "name": "issuecrew-planner",
   "owner": {
-    "name": "superagent-claude-planner maintainers"
+    "name": "issuecrew-planner maintainers"
   },
   "plugins": [
     {
-      "name": "superagent-claude-planner",
+      "name": "issuecrew-planner",
       "source": "./",
+      "version": "0.2.0",
       "description": "Plan one change across several repositories as coordinated GitHub issues for an issue-driven coding agent, published only after explicit approval."
     }
   ]

@@ -11,7 +11,7 @@ const EXAMPLE = join(ROOT, 'examples', 'plan.json')
 const created: string[] = []
 
 function tempDir(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'sacp-'))
+  const dir = mkdtempSync(join(tmpdir(), 'issuecrew-'))
   created.push(dir)
   return dir
 }
@@ -93,7 +93,7 @@ describe('show', () => {
   it('show example renders every issue and ends with the plan hash', async () => {
     const validated = await run(['validate', 'examples/plan.json'])
     const hash = validated.out.trim().replace(/^OK /, '')
-    const r = await run(['show', 'examples/plan.json', '--config', 'sac-planner.config.example.json'])
+    const r = await run(['show', 'examples/plan.json', '--config', 'issuecrew-planner.config.example.json'])
     expect(r.code).toBe(0)
     expect(r.out.split('=== Issue ').length - 1).toBe(2)
     expect(r.out).toContain('@<agent-login> please work on this issue.')
@@ -101,7 +101,7 @@ describe('show', () => {
   })
 
   it('show --json returns issues and planHash', async () => {
-    const r = await run(['show', 'examples/plan.json', '--config', 'sac-planner.config.example.json', '--json'])
+    const r = await run(['show', 'examples/plan.json', '--config', 'issuecrew-planner.config.example.json', '--json'])
     expect(r.code).toBe(0)
     const parsed = JSON.parse(r.out) as { planHash: string; issues: unknown[] }
     expect(parsed.issues.length).toBe(2)
@@ -112,6 +112,18 @@ describe('show', () => {
     const r = await run(['show', EXAMPLE], { cwd: tempDir(), env: { HOME: emptyHome() } })
     expect(r.code).toBe(2)
     expect(r.err).toContain('hint: ')
+  })
+
+  it('show rejects a config with the old agent kind', async () => {
+    const dir = tempDir()
+    writeFileSync(
+      join(dir, 'old.json'),
+      JSON.stringify({ agent: { kind: ['superagent', 'claude'].join('-'), login: 'a' } }),
+    )
+    const r = await run(['show', EXAMPLE, '--config', join(dir, 'old.json')])
+    expect(r.code).toBe(2)
+    expect(r.err).toContain('unknown agent.kind')
+    expect(r.err).toContain('supported: issuecrew')
   })
 })
 
@@ -143,7 +155,7 @@ describe('usage', () => {
   it('--help exits 0 and prints usage', async () => {
     const r = await run(['--help'])
     expect(r.code).toBe(0)
-    expect(r.out).toContain('Usage: sac-planner')
+    expect(r.out).toContain('Usage: issuecrew-planner')
     expect(r.out).toMatch(/\(publish\)\n  -h, --help +Show this help\n/)
     expect(r.out).not.toContain(')  -h, --help')
   })

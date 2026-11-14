@@ -12,11 +12,11 @@ Three tiny placeholder repositories under `repos/` (`orders-api`, `storefront`, 
 - No catalog: use `config.no-catalog.json`. The Skill asks for the repo paths; point it at the directories under `fixtures/synthetic-shop/repos/`.
 
   ```sh
-  sac-planner catalog --config fixtures/synthetic-shop/config.no-catalog.json
+  issuecrew-planner catalog --config fixtures/synthetic-shop/config.no-catalog.json
   ```
 
 - With catalog: use `config.with-catalog.json`, which points to `catalog.json`. The Skill shortlists repos from the catalog and uses each `localPath`.
 
   ```sh
-  sac-planner catalog --config fixtures/synthetic-shop/config.with-catalog.json
+  issuecrew-planner catalog --config fixtures/synthetic-shop/config.with-catalog.json
   ```

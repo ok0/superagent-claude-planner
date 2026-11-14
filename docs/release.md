@@ -15,11 +15,11 @@ Releases use semver. The git tag `vX.Y.Z` must equal the `version` in `package.j
 
 ## Prepare the release
 
-1. Bump `version` in `package.json` and `.claude-plugin/plugin.json`.
+1. Bump `version` in `package.json`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (`plugins[0].version`).
 2. Commit with the message `chore(release): X.Y.Z`.
-3. Provide the forbidden names locally, either in `.forbidden-names` or in the `SAC_PLANNER_FORBIDDEN_NAMES` environment variable, so the name scan runs.
+3. Provide the forbidden names locally, either in `.forbidden-names` or in the `ISSUECREW_PLANNER_FORBIDDEN_NAMES` environment variable, so the name scan runs.
 
-The fields `repository`, `homepage`, and `bugs` in `package.json` are the only exempt fields in the name scan. All other fields are scanned.
+The fields `repository`, `homepage`, and `bugs` in `package.json`, and the exact substrings listed in `.hygiene-allow`, are the only exemptions in the name scan. All other text is scanned.
 
 ## Check
 
@@ -31,7 +31,7 @@ The fields `repository`, `homepage`, and `bugs` in `package.json` are the only e
 
 The maintainer runs `npm login`.
 
-Check that the version is not yet published with `npm view superagent-claude-planner version`. On the first release this returns E404, which is expected.
+Check that the version is not yet published with `npm view issuecrew-planner version`. On the first release this returns E404, which is expected.
 
 Show the version and the `npm publish --dry-run` file list, and get explicit confirmation. Then run `npm publish --access public`. Publishing is never automatic.
 
@@ -44,8 +44,8 @@ The workflow runs on a tag push or on `workflow_dispatch` with the input `tag`. 
 
 ## After publishing
 
-- `npm view superagent-claude-planner version`
-- `cd "$(mktemp -d)" && npx --yes superagent-claude-planner --help`
+- `npm view issuecrew-planner version`
+- `cd "$(mktemp -d)" && npx --yes issuecrew-planner --help`
 
 ## Recovery
 

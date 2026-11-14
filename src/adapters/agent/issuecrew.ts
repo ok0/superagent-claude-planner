@@ -1,12 +1,12 @@
 import type { AgentProfile } from '../../core/agent.ts'
 import type { Plan } from '../../core/plan/schema.ts'
 
-export const SUPERAGENT_CLAUDE_KIND = 'superagent-claude'
+export const ISSUECREW_KIND = 'issuecrew'
 
-export function createSuperagentClaudeProfile(opts: { login: string }): AgentProfile {
+export function createIssuecrewProfile(opts: { login: string }): AgentProfile {
   const { login } = opts
   return {
-    kind: SUPERAGENT_CLAUDE_KIND,
+    kind: ISSUECREW_KIND,
     login,
     mentionLine(): string {
       return `@${login} please work on this issue.`

@@ -29,7 +29,7 @@ function split(repo: string): { owner: string; repo: string } {
 export function createOctokitIssueHost(opts: OctokitHostOptions): IssueHost {
   const octokit = new Octokit({
     auth: opts.token,
-    userAgent: 'sac-planner',
+    userAgent: 'issuecrew-planner',
     ...(opts.baseUrl ? { baseUrl: opts.baseUrl } : {}),
     ...(opts.fetch ? { request: { fetch: opts.fetch } } : {}),
     log: { debug() {}, info() {}, warn() {}, error() {} },

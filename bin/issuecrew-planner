@@ -1,0 +1,27 @@
+#!/bin/sh
+# Plugin launcher: local build first, then another issuecrew-planner on PATH, then an install hint.
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 2
+cli="$here/../lib/cli.js"
+if [ -f "$cli" ]; then
+  exec node "$cli" "$@"
+fi
+if [ -z "$ISSUECREW_PLANNER_LAUNCHER_FALLBACK" ]; then
+  ISSUECREW_PLANNER_LAUNCHER_FALLBACK=1
+  export ISSUECREW_PLANNER_LAUNCHER_FALLBACK
+  old_ifs=$IFS
+  IFS=:
+  set -f
+  for dir in $PATH; do
+    IFS=$old_ifs
+    [ -n "$dir" ] || continue
+    real=$(CDPATH= cd -- "$dir" 2>/dev/null && pwd -P) || continue
+    [ "$real" = "$here" ] && continue
+    if [ -f "$real/issuecrew-planner" ] && [ -x "$real/issuecrew-planner" ]; then
+      exec "$real/issuecrew-planner" "$@"
+    fi
+  done
+  IFS=$old_ifs
+  set +f
+fi
+echo "issuecrew-planner: CLI not found. Install it with: npm i -g issuecrew-planner (see docs/setup.md), or run pnpm build in the plugin directory" >&2
+exit 2

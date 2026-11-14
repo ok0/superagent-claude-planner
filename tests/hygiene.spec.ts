@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, describe, expect, it } from 'vitest'
-import { checkCoreImports, runHygiene, stripRepoMeta } from '../scripts/check-hygiene.ts'
+import { checkCoreImports, runHygiene, stripAllowed, stripRepoMeta } from '../scripts/check-hygiene.ts'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const NAME_A = 'zz-forbidden-' + 'alpha'
@@ -16,7 +16,7 @@ afterAll(() => {
 })
 
 function fixture(): string {
-  const root = mkdtempSync(join(tmpdir(), 'sacp-'))
+  const root = mkdtempSync(join(tmpdir(), 'issuecrew-'))
   made.push(root)
   mkdirSync(join(root, 'src', 'core'), { recursive: true })
   mkdirSync(join(root, 'src', 'cli'), { recursive: true })
@@ -66,7 +66,7 @@ describe('hygiene', () => {
     const io = capture()
     const code = runHygiene({
       root: tmp,
-      env: { SAC_PLANNER_FORBIDDEN_NAMES: ` ${NAME_A}, ` },
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: ` ${NAME_A}, ` },
       files: [f],
       out: io.out,
       err: io.err,
@@ -117,7 +117,7 @@ describe('repo-meta exemption', () => {
     const io = capture()
     const code = runHygiene({
       root: tmp,
-      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
       files: [pkg],
       out: io.out,
       err: io.err,
@@ -141,7 +141,7 @@ describe('repo-meta exemption', () => {
     const io = capture()
     const code = runHygiene({
       root: tmp,
-      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
       files: [pkg],
       out: io.out,
       err: io.err,
@@ -160,7 +160,7 @@ describe('repo-meta exemption', () => {
     const io = capture()
     const code = runHygiene({
       root: tmp,
-      env: { SAC_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
       files: [pkg],
       out: io.out,
       err: io.err,
@@ -172,5 +172,68 @@ describe('repo-meta exemption', () => {
     const input = 'not json ' + NAME_A
     expect(stripRepoMeta(input)).toBe(input)
     expect(stripRepoMeta('{"homepage":"a","name":"b"}')).toBe('{"name":"b"}')
+  })
+})
+
+describe('allow file', () => {
+  it('exact allowed URL forms are exempt', () => {
+    const tmp = fixture()
+    const allowFile = write(
+      tmp,
+      '.hygiene-allow',
+      '# c\nh.example/' + NAME_A + '/tool-x\nh.example/' + NAME_A + '/tool\n',
+    )
+    const doc = write(
+      tmp,
+      'doc.md',
+      'https://h.example/' +
+        NAME_A +
+        '/tool.git https://h.example/' +
+        NAME_A +
+        '/tool#readme https://h.example/' +
+        NAME_A +
+        '/tool/issues https://h.example/' +
+        NAME_A +
+        '/tool-x\n',
+    )
+    const io = capture()
+    const code = runHygiene({
+      root: tmp,
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [allowFile, doc],
+      out: io.out,
+      err: io.err,
+    })
+    expect(code).toBe(0)
+  })
+
+  it('allow entry does not exempt longer names or bare names', () => {
+    const tmp = fixture()
+    const allowFile = write(tmp, '.hygiene-allow', 'h.example/' + NAME_A + '/tool\n')
+    const doc = write(tmp, 'doc.md', 'https://h.example/' + NAME_A + '/toolkit\n')
+    const io = capture()
+    const code = runHygiene({
+      root: tmp,
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [allowFile, doc],
+      out: io.out,
+      err: io.err,
+    })
+    expect(code).toBe(1)
+    const doc2 = write(tmp, 'doc2.md', NAME_A + '\n')
+    const io2 = capture()
+    const code2 = runHygiene({
+      root: tmp,
+      env: { ISSUECREW_PLANNER_FORBIDDEN_NAMES: NAME_A },
+      files: [allowFile, doc2],
+      out: io2.out,
+      err: io2.err,
+    })
+    expect(code2).toBe(1)
+    expect(io2.errText()).toContain('forbidden name #1')
+  })
+
+  it('stripAllowed removes the longest entry first', () => {
+    expect(stripAllowed('a/b-c a/b', ['a/b', 'a/b-c'])).toBe(' ')
   })
 })

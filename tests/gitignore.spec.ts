@@ -8,19 +8,19 @@ const ignored = (path: string): boolean => spawnSync('git', ['check-ignore', '-q
 
 describe('local config files', () => {
   it('local planner config is ignored', () => {
-    expect(ignored('sac-planner.config.json')).toBe(true)
+    expect(ignored('issuecrew-planner.config.json')).toBe(true)
   })
 
   it('local worker config is ignored', () => {
-    expect(ignored('superagent-claude.json')).toBe(true)
+    expect(ignored('issuecrew.json')).toBe(true)
   })
 
   it('example config is not ignored', () => {
-    expect(ignored('sac-planner.config.example.json')).toBe(false)
+    expect(ignored('issuecrew-planner.config.example.json')).toBe(false)
   })
 
   it('no local config is tracked', () => {
-    const tracked = execFileSync('git', ['ls-files', '--', 'sac-planner.config.json', 'superagent-claude.json'], {
+    const tracked = execFileSync('git', ['ls-files', '--', 'issuecrew-planner.config.json', 'issuecrew.json'], {
       cwd: ROOT,
       encoding: 'utf8',
     })

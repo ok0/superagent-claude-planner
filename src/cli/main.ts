@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { isAbsolute, relative, resolve } from 'node:path'
-import { createSuperagentClaudeProfile, SUPERAGENT_CLAUDE_KIND } from '../adapters/agent/superagent-claude.ts'
+import { createIssuecrewProfile, ISSUECREW_KIND } from '../adapters/agent/issuecrew.ts'
 import { createOctokitIssueHost } from '../adapters/github/octokit.ts'
 import { getAgentProfile } from '../core/agent.ts'
 import type { AgentProfile, AgentRegistry } from '../core/agent.ts'
@@ -40,9 +40,9 @@ export type HostFactory = (opts: { token: string; baseUrl?: string }) => IssueHo
 
 export const DEFAULT_HOST_FACTORY: HostFactory = o => createOctokitIssueHost(o)
 
-export const DEFAULT_AGENTS: AgentRegistry = { [SUPERAGENT_CLAUDE_KIND]: createSuperagentClaudeProfile }
+export const DEFAULT_AGENTS: AgentRegistry = { [ISSUECREW_KIND]: createIssuecrewProfile }
 
-export const USAGE = `Usage: sac-planner <command> [options]
+export const USAGE = `Usage: issuecrew-planner <command> [options]
 
 Commands:
   validate <plan>                              Validate a plan file; prints OK <hash> or one "path: message" per line
@@ -53,11 +53,11 @@ Commands:
   state <plan>                                 Print the publish state saved next to the plan
   schema                                       Print the plan JSON Schema
   catalog [--json]                             Print the configured repo catalog, or "no catalog configured"
-  save [--file <path>]                         Read plan JSON from <path> (or stdin), validate it, write .sac-planner/<changesetId>/plan.json
+  save [--file <path>]                         Read plan JSON from <path> (or stdin), validate it, write .issuecrew-planner/<changesetId>/plan.json
   session start|end                            Mark the plan session active (current UTC time) or done
 
 Options:
-  --config <path>          Config file (else $SAC_PLANNER_CONFIG, ./sac-planner.config.json, ~/.config/sac-planner/config.json)
+  --config <path>          Config file (else $ISSUECREW_PLANNER_CONFIG, ./issuecrew-planner.config.json, ~/.config/issuecrew-planner/config.json)
   --json                   JSON output for show and catalog
   --hash <h>               Plan hash to approve (approve)
   --approve-hash <h>       Record approval of this hash, then publish (publish)
@@ -91,7 +91,7 @@ function printIssues(io: CliIo, issues: RenderedIssue[]): void {
 }
 
 function fail(io: CliIo, e: { message: string; hint: string }, code: number): number {
-  io.err('sac-planner: ' + e.message + '\nhint: ' + e.hint + '\n')
+  io.err('issuecrew-planner: ' + e.message + '\nhint: ' + e.hint + '\n')
   return code
 }
 
@@ -119,7 +119,7 @@ export async function main(
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    io.err('sac-planner: ' + msg + '\n' + USAGE)
+    io.err('issuecrew-planner: ' + msg + '\n' + USAGE)
     return EXIT_USAGE
   }
   const { values, positionals } = parsed
@@ -151,7 +151,7 @@ export async function main(
       agent = getAgentProfile(config.agent, agents)
     } catch (e) {
       if (!(e instanceof ConfigError)) throw e
-      io.err('sac-planner: ' + e.message + '\nhint: ' + e.hint + '\n')
+      io.err('issuecrew-planner: ' + e.message + '\nhint: ' + e.hint + '\n')
       return EXIT_USAGE
     }
     const result = await readPlanFile(resolve(io.cwd, planArg))
@@ -197,7 +197,7 @@ export async function main(
     const dryRun = values['dry-run'] === true
     if (positionals.length !== 2 || planArg === undefined) return usage(io)
     if (dryRun && approveHash !== undefined) {
-      io.err('sac-planner: --dry-run cannot be combined with --approve-hash\n')
+      io.err('issuecrew-planner: --dry-run cannot be combined with --approve-hash\n')
       return EXIT_USAGE
     }
     let config: Config
@@ -257,7 +257,7 @@ export async function main(
       }
       if (e instanceof PublishError) return fail(io, e, EXIT_GITHUB)
       if (e instanceof GitHubError) {
-        io.err('sac-planner: GitHub request failed: ' + e.message + '\nhint: re-run publish to resume\n')
+        io.err('issuecrew-planner: GitHub request failed: ' + e.message + '\nhint: re-run publish to resume\n')
         return EXIT_GITHUB
       }
       throw e
@@ -372,6 +372,6 @@ export async function main(
     return EXIT_OK
   }
 
-  io.err('sac-planner: unknown command ' + cmd + '\n' + USAGE)
+  io.err('issuecrew-planner: unknown command ' + cmd + '\n' + USAGE)
   return EXIT_USAGE
 }

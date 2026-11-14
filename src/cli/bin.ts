@@ -20,7 +20,7 @@ main(process.argv.slice(2), {
     process.exitCode = code
   },
   (e: unknown) => {
-    process.stderr.write('sac-planner: ' + String(e) + '\n')
+    process.stderr.write('issuecrew-planner: ' + String(e) + '\n')
     process.exitCode = 1
   },
 )

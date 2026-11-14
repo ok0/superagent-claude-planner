@@ -161,7 +161,7 @@ describe('plan validation', () => {
   })
 
   it('invalid JSON', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'sacp-'))
+    const dir = mkdtempSync(join(tmpdir(), 'issuecrew-'))
     const file = join(dir, 'bad.json')
     writeFileSync(file, '{ not json')
     const result = await readPlanFile(file)

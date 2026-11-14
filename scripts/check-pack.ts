@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, join, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { loadForbiddenNames, scanForbiddenNames } from './check-hygiene.ts'
+import { loadAllowedNames, loadForbiddenNames, scanForbiddenNames } from './check-hygiene.ts'
 
 export const REQUIRED_PACK_FILES = [
   'package.json',
@@ -27,12 +27,12 @@ export const DENIED_SEGMENTS = [
   '.claude-plugin',
   '.github',
   '.ensemble',
-  '.sac-planner',
+  '.issuecrew-planner',
   '.r',
   '.doc',
 ]
 export const STATE_FILES = ['plan.json', 'state.json', 'approval.json', 'draft.json', '.session-active']
-export const TOKEN_ENVS = ['PLANNER_GITHUB_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN', 'NPM_TOKEN', 'NODE_AUTH_TOKEN']
+export const TOKEN_ENVS = ['ISSUECREW_PLANNER_GITHUB_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN', 'NPM_TOKEN', 'NODE_AUTH_TOKEN']
 export const TOKEN_PATTERNS = [/gh[pousr]_[A-Za-z0-9]{30,}/, /github_pat_[A-Za-z0-9_]{20,}/, /npm_[A-Za-z0-9]{30,}/]
 
 export function deniedReason(path: string): string | null {
@@ -44,7 +44,7 @@ export function deniedReason(path: string): string | null {
   if (name === '.env' || name.startsWith('.env.')) return 'env file'
   if (/\.(spec|test)\.[cm]?[jt]sx?$/.test(name)) return 'test file'
   if (/\.[cm]?ts$/.test(name) && !/\.d\.[cm]?ts$/.test(name)) return 'source file'
-  if (name === 'superagent-claude.json' || (/config\.json$/.test(name) && !name.includes('.example.'))) {
+  if (name === 'issuecrew.json' || (/config\.json$/.test(name) && !name.includes('.example.'))) {
     return 'local config'
   }
   if (STATE_FILES.includes(name)) return 'plan/state/approval file'
@@ -109,7 +109,7 @@ export function runCheckPack(opts: {
   err: (s: string) => void
   pack?: PackFn
 }): number {
-  const dest = mkdtempSync(join(tmpdir(), 'sacp-pack-'))
+  const dest = mkdtempSync(join(tmpdir(), 'issuecrew-pack-'))
   const violations: string[] = []
   try {
     const { files, dir } = (opts.pack ?? npmPack)(opts.root, dest)
@@ -119,7 +119,7 @@ export function runCheckPack(opts: {
     const loaded = loadForbiddenNames({ env: opts.env, root: opts.root })
     if (loaded === null) {
       opts.out(
-        'check-pack: forbidden-name check skipped: set SAC_PLANNER_FORBIDDEN_NAMES or create .forbidden-names (gitignored)\n',
+        'check-pack: forbidden-name check skipped: set ISSUECREW_PLANNER_FORBIDDEN_NAMES or create .forbidden-names (gitignored)\n',
       )
     } else {
       opts.out(`check-pack: checked ${loaded.names.length} names from ${loaded.source}\n`)
@@ -127,7 +127,7 @@ export function runCheckPack(opts: {
       const nameViolations = scanForbiddenNames(
         files.map(f => join(dir, f)),
         loaded.names,
-        { packageJson: join(dir, 'package.json') },
+        { packageJson: join(dir, 'package.json'), allowed: loadAllowedNames(opts.root) },
       )
       violations.push(...nameViolations.map(v => (v.startsWith(prefix) ? v.slice(prefix.length) : v)))
     }

@@ -34,12 +34,12 @@ export function runCheckBundle(opts: { root: string; out: (s: string) => void; e
     for (const v of violations) opts.err(`check-bundle: external import ${v}\n`)
     return 1
   }
-  const tmp = mkdtempSync(join(tmpdir(), 'sacp-bundle-'))
+  const tmp = mkdtempSync(join(tmpdir(), 'issuecrew-bundle-'))
   try {
     cpSync(libDir, join(tmp, 'lib'), { recursive: true })
     cpSync(join(opts.root, 'bin'), join(tmp, 'bin'), { recursive: true })
-    chmodSync(join(tmp, 'bin', 'sac-planner'), 0o755)
-    const launcher = join(tmp, 'bin', 'sac-planner')
+    chmodSync(join(tmp, 'bin', 'issuecrew-planner'), 0o755)
+    const launcher = join(tmp, 'bin', 'issuecrew-planner')
     const env = { PATH: process.env.PATH, HOME: tmp }
     for (const args of [['schema'], ['catalog']]) {
       const result = spawnSync(launcher, args, { cwd: tmp, env, encoding: 'utf8' })

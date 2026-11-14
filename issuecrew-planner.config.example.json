@@ -1,0 +1,4 @@
+{
+  "agent": { "kind": "issuecrew", "login": "<agent-login>" },
+  "github": { "tokenEnv": "ISSUECREW_PLANNER_GITHUB_TOKEN" }
+}
