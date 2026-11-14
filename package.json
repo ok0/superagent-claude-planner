@@ -1,6 +1,6 @@
 {
   "name": "issuecrew-planner",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Plans one change across several repositories as coordinated GitHub issues for an issue-driven coding agent.",
   "license": "MIT",
   "keywords": ["github", "issues", "planner", "multi-repo", "claude-code", "agent", "cli"],
